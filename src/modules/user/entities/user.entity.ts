@@ -1,3 +1,4 @@
+import Company from 'src/modules/company/entities/company.entity';
 import { Role } from 'src/shared/entities/roles.entity';
 import {
   Column,
@@ -28,6 +29,9 @@ class User {
     inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
   })
   roles: Role[];
+
+  @ManyToMany(() => Company, (company) => company.user, { cascade: true })
+  company: Company[];
 }
 
 export default User;
