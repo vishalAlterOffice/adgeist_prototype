@@ -1,16 +1,15 @@
-import { MinLength } from 'class-validator';
-import Advertiser from 'src/modules/advertiser/entities/advertiser.entity';
-import Publisher from 'src/modules/publisher/entities/publisher.entity';
-import User from 'src/modules/user/entities/user.entity';
 import {
   Column,
   Entity,
-  ManyToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
+  OneToMany,
+  OneToOne,
 } from 'typeorm';
+import Advertiser from 'src/modules/advertiser/entities/advertiser.entity';
+import Publisher from 'src/modules/publisher/entities/publisher.entity';
+import UserCompanyRole from 'src/modules/user/entities/user_companyRole.entity';
 
-@Entity()
+@Entity('company')
 class Company {
   @PrimaryGeneratedColumn()
   id: number;
@@ -37,17 +36,19 @@ class Company {
   country: string;
 
   @Column()
-  @MinLength(10)
   contact_no: string;
 
-  @ManyToMany(() => User, (user) => user.company)
-  user: User[];
+  @OneToMany(
+    () => UserCompanyRole,
+    (userCompanyRole) => userCompanyRole.company,
+  )
+  userCompanyRoles: UserCompanyRole[];
 
   @OneToOne(() => Advertiser, (advertiser) => advertiser.company)
-  advertiser: Advertiser[];
+  advertiser: Advertiser;
 
   @OneToOne(() => Publisher, (publisher) => publisher.company)
-  publisher: Publisher[];
+  publisher: Publisher;
 }
 
 export default Company;

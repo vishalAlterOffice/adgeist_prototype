@@ -5,6 +5,9 @@ import { DatabaseModule } from './shared/database/database.module';
 import { SeedsModule } from './shared/seed/seed.module';
 import { UsersModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CompanyModule } from './modules/company/company.module';
+import { PublisherModule } from './modules/publisher/publisher.module';
+import { AdvertiserModule } from './modules/advertiser/advertiser.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { AuthModule } from './modules/auth/auth.module';
     SeedsModule,
     UsersModule,
     AuthModule,
+    CompanyModule,
+    AdvertiserModule,
+    PublisherModule,
   ],
 })
 export class AppModule {}

@@ -24,7 +24,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       where: {
         id: id,
       },
-      relations: ['roles'],
     });
 
     // console.log('user jwt', user);

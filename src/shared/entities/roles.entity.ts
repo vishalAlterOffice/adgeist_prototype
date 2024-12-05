@@ -1,14 +1,16 @@
-import User from 'src/modules/user/entities/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
+import UserCompanyRole from 'src/modules/user/entities/user_companyRole.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 @Entity('role')
-export class Role {
+class Role {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 50 })
-  role_name: string;
+  @Column({ unique: true, length: 50 })
+  role_name: string; // e.g., 'ADMIN', 'MEMBER'
 
-  @ManyToMany(() => User, (user) => user.roles)
-  users: User[];
+  @OneToMany(() => UserCompanyRole, (userCompanyRole) => userCompanyRole.role)
+  userCompanyRoles: UserCompanyRole[];
 }
+
+export default Role;

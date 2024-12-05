@@ -1,37 +1,22 @@
-import Company from 'src/modules/company/entities/company.entity';
-import { Role } from 'src/shared/entities/roles.entity';
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import UserCompanyRole from './user_companyRole.entity';
 
-@Entity()
+@Entity('user')
 class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true, name: 'user_name' })
+  @Column()
   user_name: string;
 
-  @Column({ unique: true, name: 'email' })
+  @Column({ unique: true })
   email: string;
 
   @Column()
   password: string;
 
-  @ManyToMany(() => Role, (role) => role.users, { cascade: true })
-  @JoinTable({
-    name: 'users_role',
-    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
-  })
-  roles: Role[];
-
-  @ManyToMany(() => Company, (company) => company.user, { cascade: true })
-  company: Company[];
+  @OneToMany(() => UserCompanyRole, (userCompanyRole) => userCompanyRole.user)
+  companyRoles: UserCompanyRole[];
 }
 
 export default User;

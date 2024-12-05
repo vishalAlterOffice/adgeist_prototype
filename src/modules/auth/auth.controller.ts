@@ -12,9 +12,6 @@ export class AuthController {
   @Post('/register')
   @Public()
   signUp(@Body() signUpDto: SignUpDto): Promise<{ user: Partial<User> }> {
-    if (!signUpDto.username || !signUpDto.password || !signUpDto.roles) {
-      throw new BadRequestException('All fields are required');
-    }
     return this.authService.signUp(signUpDto);
   }
 

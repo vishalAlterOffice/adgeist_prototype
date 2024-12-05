@@ -1,7 +1,6 @@
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { JwtAuthGuard } from './shared/guards/JwtAuth.guard';
-import { RolesGuard } from './shared/guards/role.guard';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -9,7 +8,7 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
 
   // Use global guards
-  app.useGlobalGuards(new JwtAuthGuard(reflector), new RolesGuard(reflector));
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
 
   app.useGlobalPipes(
     new ValidationPipe({

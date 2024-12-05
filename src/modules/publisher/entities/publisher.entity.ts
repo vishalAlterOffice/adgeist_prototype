@@ -1,8 +1,9 @@
+// Publisher Entity
 import { IsUrl } from 'class-validator';
-import Company from 'src/modules/company/entities/company.entity';
 import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import Company from 'src/modules/company/entities/company.entity';
 
-@Entity()
+@Entity('publisher')
 class Publisher {
   @PrimaryGeneratedColumn()
   id: number;
@@ -21,10 +22,10 @@ class Publisher {
 
   @Column()
   @IsUrl()
-  website_url: number;
+  website_url: string;
 
   @OneToOne(() => Company, (company) => company.publisher)
-  company: Company[];
+  company: Company;
 }
 
 export default Publisher;
