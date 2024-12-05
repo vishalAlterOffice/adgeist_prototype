@@ -25,10 +25,6 @@ export class CompanyService {
     companyDto: CompanyDto,
     user: User,
   ): Promise<{ company: Partial<Company> }> {
-    // Ensure the user exists
-    const existingUser = await this.userRepository.get(user.id);
-    if (!existingUser) throw new NotFoundException('User not found');
-
     // Create a new company
     const newCompany = await this.companyRepository.create(companyDto);
 
@@ -37,7 +33,7 @@ export class CompanyService {
     if (!adminRole) throw new NotFoundException('ADMIN role not found');
 
     await this.userCompanyRoleRepository.create({
-      user: existingUser,
+      user: user,
       company: newCompany,
       role: adminRole,
     });
@@ -92,6 +88,20 @@ export class CompanyService {
     await this.companyRepository.destroy(companyId);
 
     return { message: 'Company deleted successfully' };
+  }
+
+  // Get company by ID
+  async getCompanyById(
+    companyId: number,
+    user: User,
+  ): Promise<{ company: Company }> {
+    // Get the company
+    const companyDetails = await this.companyRepository.findOneByRelation(
+      companyId,
+      ['advertiser', 'publisher'],
+    );
+
+    return { company: companyDetails };
   }
 
   // Assign a role to another user for the company

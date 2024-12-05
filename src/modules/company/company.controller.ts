@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Patch,
   Post,
@@ -14,17 +15,23 @@ import { CompanyDto } from './dto/company.dto';
 import Company from './entities/company.entity';
 import { CompanyService } from './services/company.service';
 import { Roles } from 'src/shared/decorators/roles.decorator';
-import { RolesGuard } from 'src/shared/guards/role.guard';
 import { AssignRoleDto } from './dto/assignRole.dto';
+import { RoleGuard } from 'src/shared/guards/role.guard';
 
 @Controller('company')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(AuthGuard('jwt'), RoleGuard)
 export class CompanyController {
   constructor(private companyService: CompanyService) {}
 
+  @Get(':id')
+  async getCompanyById(@Param('id') id: number, @Req() req: any) {
+    const user = req.user;
+    return this.companyService.getCompanyById(id, user);
+  }
+
   @Post('')
   @Roles()
-  signUp(
+  create(
     @Body() companyDto: CompanyDto,
     @Request() req: any,
   ): Promise<{ company: Partial<Company> }> {

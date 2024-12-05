@@ -98,11 +98,11 @@ export class CrudRepository<T> {
   }
 
   // Find one entity by ID with relations
-  async findOneByRelation(id: number, relation: string): Promise<T | null> {
+  async findOneByRelation(id: number, relation: string[]): Promise<T | null> {
     try {
       return await this.repository.findOne({
         where: { id } as unknown as FindOptionsWhere<T>,
-        relations: [relation],
+        relations: [...relation],
       });
     } catch (error) {
       this.handleError('findOneByRelation', error);

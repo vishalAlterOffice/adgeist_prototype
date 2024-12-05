@@ -1,46 +1,43 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from '../decorators/roles.decorator';
-import { IS_PUBLIC_KEY } from 'src/modules/auth/auth.decorator';
+import UserCompanyRoleRepository from 'src/modules/company/repositories/userCompanyRole.repository';
 
 @Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+export class RoleGuard implements CanActivate {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly userCompanyRoleRepository: UserCompanyRoleRepository,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    // Check if the route is marked as public
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    const companyId = request.params.companyId || request.params.id;
+
+    if (!user || !companyId) throw new ForbiddenException('Invalid access');
+
+    // Check if the user has ADMIN access to the company
+    const userCompanyRole = await this.userCompanyRoleRepository.findOne({
+      user: { id: user.id },
+      company: { id: companyId },
+      role: { role_name: 'ADMIN' },
+    });
+
+    // If ADMIN role is found, grant full access
+    if (userCompanyRole) {
+      request.user.isAdmin = true;
       return true;
     }
-    let requiredRoles;
-    try {
-      // Fetch required roles for the route
-      requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
-        context.getHandler(),
-        context.getClass(),
-      ]);
-    } catch (error) {
-      console.log('ERR', error);
-    }
 
-    if (!requiredRoles || requiredRoles.length === 0) {
-      return true; // If no roles are specified, allow access
-    }
-    // Extract user from request
-    const request = context.switchToHttp().getRequest();
-    const { user } = request;
+    // Otherwise, allow only read access
+    if (request.method !== 'GET')
+      throw new ForbiddenException('Only read access is allowed');
 
-    if (!user || !user.roles) {
-      return false; // Deny access if user or roles are missing
-    }
-
-    // Validate user roles against the required roles
-    const userRoles = user.roles.map((role: any) => role.role_name || role); // Support `role_name` or raw role strings
-    const hasRole = requiredRoles.some((role) => userRoles.includes(role));
-    return hasRole; // Allow access if user has at least one required role
+    return true;
   }
 }
