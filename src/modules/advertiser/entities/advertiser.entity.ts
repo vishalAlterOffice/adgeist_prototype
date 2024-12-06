@@ -14,14 +14,14 @@ class Advertiser {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  marketingHandledBy: string;
+  @Column('json')
+  marketingHandledBy: string[];
 
   @Column()
-  annualRevenue: string;
+  annualRevenue: number;
 
   @Column()
-  marketingBudget: string;
+  marketingBudget: number;
 
   @Column()
   @IsUrl()

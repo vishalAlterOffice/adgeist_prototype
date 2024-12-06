@@ -17,11 +17,18 @@ import { CompanyService } from './services/company.service';
 import { Roles } from 'src/shared/decorators/roles.decorator';
 import { AssignRoleDto } from './dto/assignRole.dto';
 import { RoleGuard } from 'src/shared/guards/role.guard';
+import { Public } from '../auth/auth.decorator';
 
 @Controller('company')
 @UseGuards(AuthGuard('jwt'), RoleGuard)
 export class CompanyController {
   constructor(private companyService: CompanyService) {}
+
+  @Public()
+  @Get('all')
+  async getAllCompany(@Req() req: any) {
+    return this.companyService.getAllCompany();
+  }
 
   @Get(':id')
   async getCompanyById(@Param('id') id: number, @Req() req: any) {
@@ -31,6 +38,7 @@ export class CompanyController {
 
   @Post('')
   @Roles()
+  @Public()
   create(
     @Body() companyDto: CompanyDto,
     @Request() req: any,

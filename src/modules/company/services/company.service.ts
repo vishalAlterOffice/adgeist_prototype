@@ -91,6 +91,17 @@ export class CompanyService {
   }
 
   // Get company by ID
+  async getAllCompany(): Promise<{ company: Company[] }> {
+    // Get the company
+    const companyDetails = await this.companyRepository.getAllWithRelation([
+      'advertiser',
+      'publisher',
+    ]);
+
+    return { company: companyDetails };
+  }
+
+  // Get company by ID
   async getCompanyById(
     companyId: number,
     user: User,

@@ -10,3 +10,10 @@ export const PublisherTypes = [
   'radio',
   'sports',
 ];
+
+export const AdvertiserTypes = [
+  'agency',
+  'product team',
+  'house marketing',
+  'others',
+];

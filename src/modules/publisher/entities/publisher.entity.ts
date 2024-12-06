@@ -18,10 +18,10 @@ class Publisher {
   type: string[];
 
   @Column()
-  curr_monthly_revenue: string;
+  curr_monthly_revenue: number;
 
   @Column()
-  expected_revenue: string;
+  expected_revenue: number;
 
   @Column()
   own_ad_space: string;

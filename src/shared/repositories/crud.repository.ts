@@ -39,6 +39,15 @@ export class CrudRepository<T> {
     }
   }
 
+  // Get all with relations
+  async getAllWithRelation(relation: string[]): Promise<T[]> {
+    try {
+      return await this.repository.find({ relations: [...relation] });
+    } catch (error) {
+      this.handleError('getAll', error);
+    }
+  }
+
   // Update an entity by ID
   async update(id: string | number, data: any): Promise<T | null> {
     try {

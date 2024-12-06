@@ -2,8 +2,11 @@ import {
   ArrayMinSize,
   IsArray,
   IsNotEmpty,
+  IsNumber,
   IsString,
   IsUrl,
+  Max,
+  Min,
   Validate,
   ValidationArguments,
   ValidatorConstraint,
@@ -12,7 +15,7 @@ import {
 import { PublisherTypes } from 'src/shared/util/roles';
 
 // Custom validator to validate roles
-@ValidatorConstraint({ name: 'isValidRole', async: false })
+@ValidatorConstraint({ name: 'isValidType', async: false })
 export class IsValidRole implements ValidatorConstraintInterface {
   validate(roles: string[], args: ValidationArguments): boolean {
     return (
@@ -40,12 +43,16 @@ export class PublisherDto {
   type: string[];
 
   @IsNotEmpty()
-  @IsString()
-  curr_monthly_revenue: string;
+  @IsNumber()
+  @Min(1000)
+  @Max(1000000)
+  curr_monthly_revenue: number;
 
   @IsNotEmpty()
-  @IsString()
-  expected_revenue: string;
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  expected_revenue: number;
 
   @IsNotEmpty()
   @IsString()

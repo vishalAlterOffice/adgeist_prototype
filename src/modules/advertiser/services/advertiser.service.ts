@@ -42,6 +42,9 @@ export class AdvertiserService {
     // Create and save the new advertiser
     const advertiser = this.advertiserRepository.create({
       ...advertiserDto,
+      marketingHandledBy: Array.isArray(advertiserDto.marketingHandledBy)
+        ? advertiserDto.marketingHandledBy
+        : [advertiserDto.marketingHandledBy], // Ensure type is an array
       company,
     });
 
