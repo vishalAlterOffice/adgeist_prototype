@@ -29,10 +29,6 @@ export class AuthService {
     if (await this.userService.findByEmail(email)) {
       throw new BadRequestException('Username already exists');
     }
-    // Fetch roles from the database
-    // const roleEntities = await this.roleRepository.find({
-    //   where: { role_name: In(roles) },
-    // });
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);

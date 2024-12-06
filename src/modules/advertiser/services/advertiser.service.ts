@@ -23,6 +23,7 @@ export class AdvertiserService {
     user: User,
   ): Promise<{ advertiser: any }> {
     // Check if the company exists
+    console.log('companyID', companyId);
     const company = await this.companyRepository.findOne({ id: companyId });
     if (!company) {
       throw new NotFoundException(`Company with ID ${companyId} not found`);

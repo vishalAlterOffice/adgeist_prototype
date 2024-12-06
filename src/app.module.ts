@@ -8,6 +8,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CompanyModule } from './modules/company/company.module';
 import { PublisherModule } from './modules/publisher/publisher.module';
 import { AdvertiserModule } from './modules/advertiser/advertiser.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ResponseInterceptor } from './shared/interceptors/api-response.interceptor';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { AdvertiserModule } from './modules/advertiser/advertiser.module';
         MYSQL_USER: Joi.string().required(),
         MYSQL_PASSWORD: Joi.string().required(),
         MYSQL_DB: Joi.string().required(),
+        NODE_ENV: Joi.string().required(),
+        MYSQL_DB_TEST: Joi.string().required(),
         JWT_SECRET: Joi.string().required(),
         JWT_EXPIRES: Joi.string().default('3600s'),
       }),
@@ -30,6 +34,12 @@ import { AdvertiserModule } from './modules/advertiser/advertiser.module';
     CompanyModule,
     AdvertiserModule,
     PublisherModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
   ],
 })
 export class AppModule {}

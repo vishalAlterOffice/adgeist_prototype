@@ -13,7 +13,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         port: configService.get('MYSQL_PORT'),
         username: configService.get('MYSQL_USER'),
         password: configService.get('MYSQL_PASSWORD'),
-        database: configService.get('MYSQL_DB'),
+        database:
+          configService.get('NODE_ENV') === 'test'
+            ? configService.get('MYSQL_DB_TEST')
+            : configService.get('MYSQL_DB'),
         entities: [__dirname + '/../**/*.entity.{js,ts}'],
         synchronize: true,
         autoLoadEntities: true,
