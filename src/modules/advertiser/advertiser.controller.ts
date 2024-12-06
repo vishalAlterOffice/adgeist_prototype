@@ -12,9 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdvertiserService } from './services/advertiser.service';
-import { Roles } from 'src/shared/decorators/roles.decorator';
 import { AdvertiserDto } from './dto/advertiser.dto';
-import Advertiser from './entities/advertiser.entity';
 import { RoleGuard } from 'src/shared/guards/role.guard';
 import { Public } from '../auth/auth.decorator';
 import { sendResponse } from 'src/shared/util/sendResponse';
@@ -26,32 +24,32 @@ export class AdvertiserController {
 
   @Get(':id')
   @Public()
-  get(@Param('id') id: number, @Request() req: any) {
-    const advertiser = this.advertiserService.getAdvertiserById(id);
+  async get(@Param('id') id: number, @Request() req: any) {
+    const advertiser = await this.advertiserService.getAdvertiserById(id);
     return sendResponse(true, 'Advertiser details', advertiser);
   }
 
   @Post(':id')
-  create(
+  async create(
     @Param('id') companyId: number,
     @Body() advertiserDto: AdvertiserDto,
     @Request() req: any,
   ) {
-    const createdAdvertiser = this.advertiserService.create(
+    const newAdvertiser = await this.advertiserService.create(
       companyId,
       advertiserDto,
       req.user,
     );
-    return sendResponse(true, 'Advertiser created', createdAdvertiser);
+    return sendResponse(true, 'Advertiser created', newAdvertiser);
   }
 
   @Patch(':id')
   async update(
-    @Param('companyId') companyId: number,
+    @Param('id') companyId: number,
     @Body() advertiserDto: AdvertiserDto,
     @Req() req: any,
   ) {
-    const updatedAdvertiser = this.advertiserService.update(
+    const updatedAdvertiser = await this.advertiserService.update(
       companyId,
       advertiserDto,
     );

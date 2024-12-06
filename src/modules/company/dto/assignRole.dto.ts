@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { RoleName } from 'src/shared/util/roles';
 
 export class AssignRoleDto {
   @IsNotEmpty()
@@ -6,6 +7,6 @@ export class AssignRoleDto {
   targetUserId: number;
 
   @IsNotEmpty()
-  @IsString()
-  roleName: 'ADMIN' | 'MEMBER';
+  @IsEnum(RoleName, { message: 'Role must be ADMIN or MEMBER' })
+  roleName: RoleName;
 }

@@ -4,6 +4,7 @@ import { SignUpDto } from './dto/signup.dto';
 import { Public } from './auth.decorator';
 import { AuthService } from './service/auth.service';
 import User from '../user/entities/user.entity';
+import { sendResponse } from 'src/shared/util/sendResponse';
 
 @Controller('auth')
 export class AuthController {
@@ -11,13 +12,15 @@ export class AuthController {
 
   @Post('/register')
   @Public()
-  signUp(@Body() signUpDto: SignUpDto): Promise<{ user: Partial<User> }> {
-    return this.authService.signUp(signUpDto);
+  async signUp(@Body() signUpDto: SignUpDto) {
+    const newUser = await this.authService.signUp(signUpDto);
+    return sendResponse(true, 'User created', newUser);
   }
 
   @Post('/login')
   @Public()
-  login(@Body() loginDto: LoginDto): Promise<{ token: string }> {
-    return this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginDto) {
+    const token = await this.authService.login(loginDto);
+    return sendResponse(true, 'token created', token);
   }
 }

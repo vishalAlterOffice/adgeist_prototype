@@ -40,13 +40,15 @@ export class PublisherService {
     }
 
     // Create and save the new publisher
-    const publisher = this.publisherRepository.create({
+    const publisher = await this.publisherRepository.create({
       ...publisherDto,
       type: Array.isArray(publisherDto.type)
         ? publisherDto.type
         : [publisherDto.type], // Ensure type is an array
       company,
     });
+
+    console.log('publisher', publisher);
 
     return { publisher: publisher };
   }

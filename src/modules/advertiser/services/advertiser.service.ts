@@ -23,7 +23,6 @@ export class AdvertiserService {
     user: User,
   ): Promise<{ advertiser: any }> {
     // Check if the company exists
-    console.log('companyID', companyId);
     const company = await this.companyRepository.findOne({ id: companyId });
     if (!company) {
       throw new NotFoundException(`Company with ID ${companyId} not found`);
@@ -41,7 +40,7 @@ export class AdvertiserService {
     }
 
     // Create and save the new advertiser
-    const advertiser = this.advertiserRepository.create({
+    const advertiser = await this.advertiserRepository.create({
       ...advertiserDto,
       marketingHandledBy: Array.isArray(advertiserDto.marketingHandledBy)
         ? advertiserDto.marketingHandledBy

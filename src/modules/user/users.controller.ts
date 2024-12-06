@@ -7,8 +7,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import User from './entities/user.entity';
 import { UsersService } from './services/users.service';
+import { sendResponse } from 'src/shared/util/sendResponse';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'))
@@ -16,24 +16,25 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  async getCurrentUser(@Request() req: any): Promise<Partial<User>> {
+  async getCurrentUser(@Request() req: any) {
     if (!req.user) {
       throw new NotFoundException('User not found');
     }
     const { password, ...userWithoutPassword } = req.user;
-    return userWithoutPassword;
+    return sendResponse(true, 'Current user', userWithoutPassword);
   }
 
   @Get()
   async getAllUsers() {
     const users = await this.usersService.getAllUsers();
-    return users.map(({ password, ...user }) => user);
+    const allUsers = users.map(({ password, ...user }) => user);
+    return sendResponse(true, 'All users fetched', allUsers);
   }
 
   @Get(':id')
-  async getUserById(@Param('id') id: string): Promise<Partial<User>> {
+  async getUserById(@Param('id') id: string) {
     const user = await this.usersService.getUserById(Number(id));
     const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return sendResponse(true, 'User fetched successfully', userWithoutPassword);
   }
 }

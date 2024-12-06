@@ -16,6 +16,7 @@ import { PublisherDto } from './dto/publisher.dto';
 import Publisher from './entities/publisher.entity';
 import { Public } from '../auth/auth.decorator';
 import { RoleGuard } from 'src/shared/guards/role.guard';
+import { sendResponse } from 'src/shared/util/sendResponse';
 
 @Controller('publisher')
 @UseGuards(AuthGuard('jwt'), RoleGuard)
@@ -24,30 +25,37 @@ export class PublisherController {
 
   @Get(':id')
   @Public()
-  get(
-    @Param('id') id: number,
-    @Request() req: any,
-  ): Promise<{ publisher: Partial<Publisher> }> {
-    return this.publisherService.getPublisherById(id);
+  async get(@Param('id') id: number, @Request() req: any) {
+    const publisher = await this.publisherService.getPublisherById(id);
+    return sendResponse(true, 'Publisher details', publisher);
   }
 
   @Post(':id')
-  create(
-    @Param('companyId') companyId: number,
+  async create(
+    @Param('id') companyId: number,
     @Body() publisherDto: PublisherDto,
     @Request() req: any,
-  ): Promise<{ publisher: Partial<Publisher> }> {
-    return this.publisherService.create(companyId, publisherDto, req.user);
+  ) {
+    const newPublisher = await this.publisherService.create(
+      companyId,
+      publisherDto,
+      req.user,
+    );
+    return sendResponse(true, 'Publisher created', newPublisher);
   }
 
   @Patch(':id')
   async update(
-    @Param('companyId') companyId: number,
+    @Param('id') companyId: number,
     @Body() publisherDto: PublisherDto,
     @Req() req: any,
   ) {
     const user = req.user;
-    return this.publisherService.update(companyId, publisherDto);
+    const updatedPublisher = await this.publisherService.update(
+      companyId,
+      publisherDto,
+    );
+    return sendResponse(true, 'Publisher Updated', updatedPublisher);
   }
 
   // @Delete(':id')
