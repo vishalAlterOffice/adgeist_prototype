@@ -40,11 +40,13 @@ export class RoleGuard implements CanActivate {
     const user = request.user;
     const companyId = request.params.companyId || request.params.id;
 
-    if (!user || !companyId) throw new ForbiddenException('Invalid access');
+    if (!user || !companyId) {
+      throw new ForbiddenException('Invalid access');
+    }
 
     // Fetch roles of the user for the company
-    const userCompanyRole =
-      await this.userCompanyRoleRepository.findWithRelations(
+    const userCompanyRoles =
+      await this.userCompanyRoleRepository.findManyWithRelations(
         {
           user: { id: user.id },
           company: { id: companyId },
@@ -52,17 +54,21 @@ export class RoleGuard implements CanActivate {
         ['roles'],
       );
 
-    console.log('userCompanyRole', userCompanyRole);
-
-    if (!userCompanyRole) {
+    if (!userCompanyRoles || userCompanyRoles.length === 0) {
       throw new ForbiddenException('You do not have access to this company');
     }
-    const userRoles =
-      userCompanyRole.roles?.map((role) => role.role_name) || [];
 
-    if (!userRoles.includes('ADMIN')) {
+    // Flatten roles into a single array of role names
+    const userRoles = userCompanyRoles.flatMap(
+      (ucr) => ucr.roles?.map((role) => role.role_name) || [],
+    );
+
+    // Check if the user has at least one of the required roles
+    const hasRequiredRole = userRoles.includes('ADMIN');
+
+    if (!hasRequiredRole) {
       throw new ForbiddenException(
-        'You do not have the required permissions to modify this resource.',
+        'You do not have the required permissions to access this resource.',
       );
     }
 

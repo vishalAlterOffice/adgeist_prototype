@@ -6,8 +6,6 @@ import { SeedsModule } from './shared/seed/seed.module';
 import { UsersModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CompanyModule } from './modules/company/company.module';
-import { PublisherModule } from './modules/publisher/publisher.module';
-import { AdvertiserModule } from './modules/advertiser/advertiser.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './shared/interceptors/api-response.interceptor';
 
@@ -32,8 +30,6 @@ import { ResponseInterceptor } from './shared/interceptors/api-response.intercep
     UsersModule,
     AuthModule,
     CompanyModule,
-    AdvertiserModule,
-    PublisherModule,
   ],
   providers: [
     {

@@ -5,9 +5,9 @@ import {
   OneToMany,
   OneToOne,
 } from 'typeorm';
-import Advertiser from 'src/modules/advertiser/entities/advertiser.entity';
-import Publisher from 'src/modules/publisher/entities/publisher.entity';
 import UserCompanyRole from 'src/modules/user/entities/user_companyRole.entity';
+import Advertiser from './advertiser.entity';
+import Publisher from './publisher.entity';
 
 @Entity('company')
 class Company {

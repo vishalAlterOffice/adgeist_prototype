@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Req,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -16,11 +17,19 @@ import { RoleGuard } from 'src/shared/guards/role.guard';
 import { Public } from '../auth/auth.decorator';
 import { sendResponse } from 'src/shared/util/sendResponse';
 import { AssignRoleDto } from './dto/assignRole.dto';
+import { AdvertiserDto } from './dto/advertiser.dto';
+import { AdvertiserService } from './services/advertiser.service';
+import { PublisherService } from './services/publisher.service';
+import { PublisherDto } from './dto/publisher.dto';
 
 @Controller('company')
 @UseGuards(AuthGuard('jwt'))
 export class CompanyController {
-  constructor(private companyService: CompanyService) {}
+  constructor(
+    private companyService: CompanyService,
+    private advertiserService: AdvertiserService,
+    private publisherService: PublisherService,
+  ) {}
 
   @Public()
   @Get('all')
@@ -40,7 +49,7 @@ export class CompanyController {
 
   @Post('')
   @Public()
-  async create(@Body() companyDto: any, @Req() req: any) {
+  async createCompany(@Body() companyDto: any, @Req() req: any) {
     const newCompany = await this.companyService.create(companyDto, req.user);
     return sendResponse(true, 'Company created', newCompany);
   }
@@ -48,7 +57,7 @@ export class CompanyController {
   @Patch(':id')
   @Roles('ADMIN') // Only ADMIN can update
   @UseGuards(RoleGuard)
-  async update(
+  async updateCompany(
     @Param('id') id: number,
     @Body() companyDto: any,
     @Req() req: any,
@@ -86,5 +95,73 @@ export class CompanyController {
     );
 
     return sendResponse(true, 'Role assigned successfully', updatedRoles);
+  }
+
+  @Get('advertiser/:id')
+  @Public()
+  async getAdvertiser(@Param('id') id: number, @Request() req: any) {
+    const advertiser = await this.advertiserService.getAdvertiserById(id);
+    return sendResponse(true, 'Advertiser details', advertiser);
+  }
+
+  @Post(':id/advertiser')
+  async createAdvertiser(
+    @Param('id') companyId: number,
+    @Body() advertiserDto: AdvertiserDto,
+    @Request() req: any,
+  ) {
+    const newAdvertiser = await this.advertiserService.create(
+      companyId,
+      advertiserDto,
+      req.user,
+    );
+    return sendResponse(true, 'Advertiser created', newAdvertiser);
+  }
+
+  @Patch(':id/advertiser')
+  async updateAdvertiser(
+    @Param('id') companyId: number,
+    @Body() advertiserDto: AdvertiserDto,
+    @Req() req: any,
+  ) {
+    const updatedAdvertiser = await this.advertiserService.update(
+      companyId,
+      advertiserDto,
+    );
+    return sendResponse(true, 'Advertiser updated', updatedAdvertiser);
+  }
+
+  @Get(':id/publisher')
+  @Public()
+  async getPublisher(@Param('id') id: number, @Request() req: any) {
+    const publisher = await this.publisherService.getPublisherById(id);
+    return sendResponse(true, 'Publisher details', publisher);
+  }
+
+  @Post(':id/publisher')
+  async createPublisher(
+    @Param('id') companyId: number,
+    @Body() publisherDto: PublisherDto,
+    @Request() req: any,
+  ) {
+    const newPublisher = await this.publisherService.create(
+      companyId,
+      publisherDto,
+      req.user,
+    );
+    return sendResponse(true, 'Publisher created', newPublisher);
+  }
+
+  @Patch(':id/publisher')
+  async updatePublisher(
+    @Param('id') companyId: number,
+    @Body() publisherDto: PublisherDto,
+    @Req() req: any,
+  ) {
+    const updatedPublisher = await this.publisherService.update(
+      companyId,
+      publisherDto,
+    );
+    return sendResponse(true, 'Publisher Updated', updatedPublisher);
   }
 }

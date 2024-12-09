@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { CompanyDto } from '../dto/company.dto';
@@ -11,8 +10,6 @@ import UserRepository from 'src/modules/user/repositories/user.repository';
 import User from 'src/modules/user/entities/user.entity';
 import RoleRepository from 'src/shared/repositories/role.repository';
 import UserCompanyRoleRepository from '../repositories/userCompanyRole.repository';
-import { FindOptionsWhere } from 'typeorm';
-import Role from 'src/shared/entities/roles.entity';
 
 @Injectable()
 export class CompanyService {
@@ -131,7 +128,7 @@ export class CompanyService {
     roleNames: string[],
   ): Promise<{ message: string }> {
     // Validate if the target user exists
-    const targetUser = await this.userRepository.get(targetUserId);
+    const targetUser = await this.userRepository.findOne({ id: targetUserId });
     if (!targetUser) {
       throw new NotFoundException('Target user not found');
     }
@@ -142,18 +139,36 @@ export class CompanyService {
       throw new NotFoundException('Roles not found');
     }
 
-    // Check if a user-company-role relation exists
+    // Fetch the user-company-role relation
     let userCompanyRoleRecord =
       await this.userCompanyRoleRepository.findWithRelations(
         { user: { id: targetUserId }, company: { id: companyId } },
         ['roles'],
       );
 
+    // If the relation exists, update roles
     if (userCompanyRoleRecord) {
-      // Update existing roles
-      const updatedRoles = { roles };
-      userCompanyRoleRecord =
-        await this.userCompanyRoleRepository.save(updatedRoles);
+      const existingRoleNames = userCompanyRoleRecord.roles.map(
+        (role) => role.role_name,
+      );
+
+      // Filter out roles that are already assigned
+      const newRoles = roles.filter(
+        (role) => !existingRoleNames.includes(role.role_name),
+      );
+
+      if (newRoles.length === 0) {
+        return {
+          message: `User already has the roles: ${roleNames.join(', ')}`,
+        };
+      }
+
+      // Append new roles and save
+      userCompanyRoleRecord.roles = [
+        ...userCompanyRoleRecord.roles,
+        ...newRoles,
+      ];
+      await this.userCompanyRoleRepository.save(userCompanyRoleRecord);
     } else {
       // Create a new user-company-role relation
       userCompanyRoleRecord = await this.userCompanyRoleRepository.create({
@@ -161,6 +176,7 @@ export class CompanyService {
         company: { id: companyId } as Company,
         roles,
       });
+      await this.userCompanyRoleRepository.save(userCompanyRoleRecord);
     }
 
     return {

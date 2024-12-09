@@ -92,6 +92,20 @@ export class CrudRepository<T> {
     }
   }
 
+  async findManyWithRelations(
+    criteria: FindOptionsWhere<T>,
+    relations: string[],
+  ) {
+    try {
+      return await this.repository.find({
+        where: criteria,
+        relations: [...relations],
+      });
+    } catch (error) {
+      this.handleError('findOne', error);
+    }
+  }
+
   // Find one entity by ID and additional parameters
   async findByValue(
     id: string | number,
