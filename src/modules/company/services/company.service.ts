@@ -97,8 +97,6 @@ export class CompanyService {
     const companyDetails = await this.companyRepository.getAllWithRelation([
       'advertiser',
       'publisher',
-      'userCompanyRoles',
-      'userCompanyRoles.user', // Include nested relation for users
     ]);
 
     return { company: companyDetails };
@@ -111,7 +109,7 @@ export class CompanyService {
   ): Promise<{ company: Company }> {
     const companyDetails = await this.companyRepository.findOneByRelation(
       companyId,
-      ['advertiser', 'publisher', 'user'],
+      ['advertiser', 'publisher', 'userCompanyRoles', 'userCompanyRoles.user'], // Include nested relation for users,
     );
 
     if (!companyDetails) {

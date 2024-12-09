@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayMinSize,
   IsArray,
@@ -40,21 +41,33 @@ export class AdvertiserDto {
       ', ',
     )}`,
   })
+  @ApiProperty({
+    example: ['agency'],
+  })
   marketingHandledBy: string[];
 
   @IsNotEmpty()
   @IsNumber()
   @Min(1000)
   @Max(100000)
+  @ApiProperty({
+    example: 20000,
+  })
   annualRevenue: number;
 
   @IsNotEmpty()
   @IsNumber()
   @Min(1000)
   @Max(100000)
+  @ApiProperty({
+    example: 28000,
+  })
   marketingBudget: number;
 
   @IsNotEmpty()
   @IsUrl()
+  @ApiProperty({
+    example: 'www.google.com',
+  })
   website_url: string;
 }

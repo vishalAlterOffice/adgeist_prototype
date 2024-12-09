@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayMinSize,
   IsArray,
@@ -18,19 +19,23 @@ export class IsValidRole implements ValidatorConstraintInterface {
       Array.isArray(roles) && roles.every((role) => defaultRoles.includes(role))
     );
   }
-
-  defaultMessage(args: ValidationArguments): string {
-    return `Each role must be one of the following: ${defaultRoles.join(', ')}`;
-  }
 }
 
 export class AssignRoleDto {
   @IsNotEmpty()
   @IsNumber()
+  @ApiProperty({
+    example: 1,
+  })
   targetUserId: number;
 
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one role must be provided' })
-  @Validate(IsValidRole, { message: 'Role must be either ADMIN or MEMBER' })
+  @Validate(IsValidRole, {
+    message: `Each role must be one of the following: ${defaultRoles.join(', ')}`,
+  })
+  @ApiProperty({
+    example: [RoleName.MEMBER],
+  })
   roleName: RoleName[];
 }

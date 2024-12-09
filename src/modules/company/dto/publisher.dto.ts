@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayMinSize,
   IsArray,
@@ -40,25 +41,40 @@ export class PublisherDto {
       ', ',
     )}`,
   })
+  @ApiProperty({
+    example: ['magazine'],
+  })
   type: string[];
 
   @IsNotEmpty()
   @IsNumber()
   @Min(1000)
   @Max(1000000)
+  @ApiProperty({
+    example: 39999,
+  })
   curr_monthly_revenue: number;
 
   @IsNotEmpty()
   @IsNumber()
   @Min(0)
   @Max(100)
+  @ApiProperty({
+    example: 89,
+  })
   expected_revenue: number;
 
   @IsNotEmpty()
   @IsString()
+  @ApiProperty({
+    example: '21',
+  })
   own_ad_space: string;
 
   @IsNotEmpty()
   @IsUrl()
+  @ApiProperty({
+    example: 'www.google.com',
+  })
   website_url: string;
 }

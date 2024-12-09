@@ -15,21 +15,24 @@ describe('AuthController', () => {
         {
           provide: AuthService,
           useValue: {
-            signUp: jest.fn(),
-            login: jest.fn(),
+            signUp: jest.fn().mockResolvedValue({
+              success: true,
+              message: 'User created',
+            }),
+            login: jest.fn().mockResolvedValue({
+              success: true,
+              message: 'token created',
+            }),
           },
         },
       ],
-    })
-      .overrideGuard({})
-      .useValue({})
-      .compile();
+    }).compile();
 
     authController = module.get<AuthController>(AuthController);
     authService = module.get<AuthService>(AuthService);
   });
 
-  describe('register', () => {
+  describe('signUp', () => {
     it('should register a user and return a token', async () => {
       const registerDto: SignUpDto = {
         username: 'user',
@@ -40,7 +43,7 @@ describe('AuthController', () => {
       const result = await authController.signUp(registerDto);
 
       expect(authService.signUp).toHaveBeenCalledWith(registerDto);
-      expect(result.success).toEqual(true);
+      expect(result).toEqual({ success: true, message: 'User created' });
     });
   });
 
@@ -54,7 +57,7 @@ describe('AuthController', () => {
       const result = await authController.login(loginDto);
 
       expect(authService.login).toHaveBeenCalledWith(loginDto);
-      expect(result.success).toEqual(true);
+      expect(result).toEqual({ success: true, message: 'token created' });
     });
   });
 });

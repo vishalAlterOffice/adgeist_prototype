@@ -21,6 +21,8 @@ import { AdvertiserDto } from './dto/advertiser.dto';
 import { AdvertiserService } from './services/advertiser.service';
 import { PublisherService } from './services/publisher.service';
 import { PublisherDto } from './dto/publisher.dto';
+import { ApiBody } from '@nestjs/swagger';
+import { CompanyDto } from './dto/company.dto';
 
 @Controller('company')
 @UseGuards(AuthGuard('jwt'))
@@ -39,7 +41,7 @@ export class CompanyController {
   }
 
   @Get(':id')
-  @Roles('USER', 'ADMIN') // Define required roles
+  @Roles('MEMBER', 'ADMIN') // Define required roles
   @UseGuards(RoleGuard)
   async getCompanyById(@Param('id') id: number, @Req() req: any) {
     const user = req.user;
@@ -49,6 +51,7 @@ export class CompanyController {
 
   @Post('')
   @Public()
+  @ApiBody({ type: CompanyDto })
   async createCompany(@Body() companyDto: any, @Req() req: any) {
     const newCompany = await this.companyService.create(companyDto, req.user);
     return sendResponse(true, 'Company created', newCompany);
@@ -57,6 +60,7 @@ export class CompanyController {
   @Patch(':id')
   @Roles('ADMIN') // Only ADMIN can update
   @UseGuards(RoleGuard)
+  @ApiBody({ type: CompanyDto })
   async updateCompany(
     @Param('id') id: number,
     @Body() companyDto: any,
@@ -82,6 +86,7 @@ export class CompanyController {
   @Post(':id/assign-role')
   @Roles('ADMIN') // Only ADMIN can assign roles
   @UseGuards(RoleGuard)
+  @ApiBody({ type: AssignRoleDto })
   async assignRole(
     @Param('id') id: number,
     @Body() assignRoleDto: AssignRoleDto,
@@ -105,6 +110,7 @@ export class CompanyController {
   }
 
   @Post(':id/advertiser')
+  @ApiBody({ type: AdvertiserDto })
   async createAdvertiser(
     @Param('id') companyId: number,
     @Body() advertiserDto: AdvertiserDto,
@@ -119,6 +125,7 @@ export class CompanyController {
   }
 
   @Patch(':id/advertiser')
+  @ApiBody({ type: AdvertiserDto })
   async updateAdvertiser(
     @Param('id') companyId: number,
     @Body() advertiserDto: AdvertiserDto,
@@ -139,6 +146,7 @@ export class CompanyController {
   }
 
   @Post(':id/publisher')
+  @ApiBody({ type: PublisherDto })
   async createPublisher(
     @Param('id') companyId: number,
     @Body() publisherDto: PublisherDto,
@@ -153,6 +161,7 @@ export class CompanyController {
   }
 
   @Patch(':id/publisher')
+  @ApiBody({ type: PublisherDto })
   async updatePublisher(
     @Param('id') companyId: number,
     @Body() publisherDto: PublisherDto,

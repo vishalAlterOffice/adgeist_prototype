@@ -55,22 +55,22 @@ export class PublisherService {
 
   // Update a company (only allowed for ADMIN users of the company)
   async update(
-    publisherId: number,
+    companyId: number,
     publisherDto: Partial<PublisherDto>,
   ): Promise<{ publisher: Partial<Publisher> }> {
-    const advertiser = await this.publisherRepository.findOne({
-      id: publisherId,
+    const company = await this.companyRepository.findOne({
+      id: companyId,
     });
 
-    if (!advertiser) {
+    if (!company) {
       throw new NotFoundException(
-        `Advertiser with ${publisherId} ID is not found`,
+        `Advertiser with ${companyId} ID is not found`,
       );
     }
 
     // update Publisher
     const updatedPublisher = await this.publisherRepository.update(
-      publisherId,
+      company.publisher.id,
       {
         ...publisherDto,
       },
@@ -91,13 +91,11 @@ export class PublisherService {
   }
 
   // Get publisher by ID
-  async getPublisherById(
-    publisherId: number,
-  ): Promise<{ publisher: Publisher }> {
-    const publisher = await this.publisherRepository.findOne({
-      id: publisherId,
+  async getPublisherById(companyId: number): Promise<{ publisher: Publisher }> {
+    const company = await this.companyRepository.findOne({
+      id: companyId,
     });
 
-    return { publisher: publisher };
+    return { publisher: company.publisher };
   }
 }
