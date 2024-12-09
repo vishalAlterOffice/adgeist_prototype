@@ -14,6 +14,7 @@ export class AuthController {
   @Public()
   async signUp(@Body() signUpDto: SignUpDto) {
     const newUser = await this.authService.signUp(signUpDto);
+
     return sendResponse(true, 'User created', newUser);
   }
 

@@ -42,7 +42,9 @@ export class CrudRepository<T> {
   // Get all with relations
   async getAllWithRelation(relation: string[]): Promise<T[]> {
     try {
-      return await this.repository.find({ relations: [...relation] });
+      return await this.repository.find({
+        relations: [...relation],
+      });
     } catch (error) {
       this.handleError('getAll', error);
     }
@@ -58,10 +60,33 @@ export class CrudRepository<T> {
     }
   }
 
+  // Save an entity by ID
+  async save(data: any): Promise<T | null> {
+    try {
+      return await this.repository.save(data);
+    } catch (error) {
+      this.handleError('update', error);
+    }
+  }
+
   // Find one entity by criteria
   async findOne(criteria: FindOptionsWhere<T>): Promise<T | null> {
     try {
       return await this.repository.findOne({ where: criteria });
+    } catch (error) {
+      this.handleError('findOne', error);
+    }
+  }
+
+  async findWithRelations(
+    criteria: FindOptionsWhere<T>,
+    relations: string[],
+  ): Promise<T | null> {
+    try {
+      return await this.repository.findOne({
+        where: criteria,
+        relations: [...relations],
+      });
     } catch (error) {
       this.handleError('findOne', error);
     }

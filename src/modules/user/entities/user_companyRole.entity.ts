@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  ManyToMany,
+  JoinColumn,
+  JoinTable,
+} from 'typeorm';
 import User from './user.entity';
 import Company from 'src/modules/company/entities/company.entity';
 import Role from 'src/shared/entities/roles.entity';
@@ -16,9 +23,13 @@ class UserCompanyRole {
   @JoinColumn({ name: 'company_id' })
   company: Company;
 
-  @ManyToOne(() => Role, (role) => role.userCompanyRoles)
-  @JoinColumn({ name: 'role_id' })
-  role: Role;
+  @ManyToMany(() => Role)
+  @JoinTable({
+    name: 'user_company_role_roles',
+    joinColumn: { name: 'user_company_role_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
+  roles: Role[];
 }
 
 export default UserCompanyRole;

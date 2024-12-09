@@ -14,10 +14,10 @@ class Company {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   company_name: string;
 
-  @Column()
+  @Column({ unique: true })
   GST_No: string;
 
   @Column()

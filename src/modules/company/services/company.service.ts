@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CompanyDto } from '../dto/company.dto';
 import Company from '../entities/company.entity';
@@ -10,6 +11,8 @@ import UserRepository from 'src/modules/user/repositories/user.repository';
 import User from 'src/modules/user/entities/user.entity';
 import RoleRepository from 'src/shared/repositories/role.repository';
 import UserCompanyRoleRepository from '../repositories/userCompanyRole.repository';
+import { FindOptionsWhere } from 'typeorm';
+import Role from 'src/shared/entities/roles.entity';
 
 @Injectable()
 export class CompanyService {
@@ -25,17 +28,29 @@ export class CompanyService {
     companyDto: CompanyDto,
     user: User,
   ): Promise<{ company: Partial<Company> }> {
+    const isCompanyExists = await this.companyRepository.findOne({
+      GST_No: companyDto.GST_No,
+    });
+
+    if (isCompanyExists) {
+      throw new BadRequestException('GST number already exists');
+    }
+
     // Create a new company
     const newCompany = await this.companyRepository.create(companyDto);
 
     // Assign the user as ADMIN for the created company
-    const adminRole = await this.roleRepository.findOne({ role_name: 'ADMIN' });
-    if (!adminRole) throw new NotFoundException('ADMIN role not found');
+    const adminRole = await this.roleRepository.findOne({
+      role_name: 'ADMIN',
+    });
+    if (!adminRole) {
+      throw new NotFoundException('ADMIN role not found');
+    }
 
     await this.userCompanyRoleRepository.create({
       user: user,
       company: newCompany,
-      role: adminRole,
+      roles: [adminRole],
     });
 
     return { company: newCompany };
@@ -47,55 +62,46 @@ export class CompanyService {
     companyDto: Partial<CompanyDto>,
     user: User,
   ): Promise<{ company: Partial<Company> }> {
-    // Check if the user is an ADMIN of the company
-    const userCompanyRole = await this.userCompanyRoleRepository.findOne({
-      user: { id: user.id },
-      company: { id: companyId },
-      role: { role_name: 'ADMIN' },
+    // Check for duplicate GST number
+    const existingCompany = await this.companyRepository.findOne({
+      GST_No: companyDto.GST_No,
     });
 
-    if (!userCompanyRole)
-      throw new ForbiddenException(
-        'You do not have permission to update this company',
-      );
+    if (
+      existingCompany &&
+      existingCompany.id !== companyId // Ensure the existing company is not the same as the one being updated
+    ) {
+      throw new BadRequestException('GST number already exists');
+    }
 
     // Update the company
     const updatedCompany = await this.companyRepository.update(
       companyId,
       companyDto,
     );
-    if (!updatedCompany)
+
+    if (!updatedCompany) {
       throw new NotFoundException('Failed to update company');
+    }
 
     return { company: updatedCompany };
   }
 
   // Delete a company (only allowed for ADMIN users of the company)
   async delete(companyId: number, user: User): Promise<{ message: string }> {
-    // Check if the user is an ADMIN of the company
-    const userCompanyRole = await this.userCompanyRoleRepository.findOne({
-      user: { id: user.id },
-      company: { id: companyId },
-      role: { role_name: 'ADMIN' },
-    });
-
-    if (!userCompanyRole)
-      throw new ForbiddenException(
-        'You do not have permission to delete this company',
-      );
-
     // Delete the company
     await this.companyRepository.destroy(companyId);
 
     return { message: 'Company deleted successfully' };
   }
 
-  // Get company by ID
+  // Get all companies
   async getAllCompany(): Promise<{ company: Company[] }> {
-    // Get the company
     const companyDetails = await this.companyRepository.getAllWithRelation([
       'advertiser',
       'publisher',
+      'userCompanyRoles',
+      'userCompanyRoles.user', // Include nested relation for users
     ]);
 
     return { company: companyDetails };
@@ -106,11 +112,14 @@ export class CompanyService {
     companyId: number,
     user: User,
   ): Promise<{ company: Company }> {
-    // Get the company
     const companyDetails = await this.companyRepository.findOneByRelation(
       companyId,
-      ['advertiser', 'publisher'],
+      ['advertiser', 'publisher', 'user'],
     );
+
+    if (!companyDetails) {
+      throw new NotFoundException('Company not found');
+    }
 
     return { company: companyDetails };
   }
@@ -119,46 +128,43 @@ export class CompanyService {
   async assignRole(
     companyId: number,
     targetUserId: number,
-    roleName: 'ADMIN' | 'MEMBER',
-    user: User,
+    roleNames: string[],
   ): Promise<{ message: string }> {
-    // Check if the user is an ADMIN of the company
-    const userCompanyRole = await this.userCompanyRoleRepository.findOne({
-      user: { id: user.id },
-      company: { id: companyId },
-      role: { role_name: 'ADMIN' },
-    });
+    // Validate if the target user exists
+    const targetUser = await this.userRepository.get(targetUserId);
+    if (!targetUser) {
+      throw new NotFoundException('Target user not found');
+    }
 
-    if (!userCompanyRole)
-      throw new ForbiddenException(
-        'You do not have permission to assign roles for this company',
+    // Fetch roles by names
+    const roles = await this.roleRepository.findByNames(roleNames);
+    if (!roles.length) {
+      throw new NotFoundException('Roles not found');
+    }
+
+    // Check if a user-company-role relation exists
+    let userCompanyRoleRecord =
+      await this.userCompanyRoleRepository.findWithRelations(
+        { user: { id: targetUserId }, company: { id: companyId } },
+        ['roles'],
       );
 
-    // Check if the target user exists
-    const targetUser = await this.userRepository.get(targetUserId);
-    if (!targetUser) throw new NotFoundException('Target user not found');
-
-    // Assign the role to the target user
-    const role = await this.roleRepository.findOne({ role_name: roleName });
-    if (!role) throw new NotFoundException(`${roleName} role not found`);
-
-    const isAssignedRole = await this.userCompanyRoleRepository.findOne({
-      user: targetUser,
-    });
-
-    if (isAssignedRole) {
-      await this.userCompanyRoleRepository.update(isAssignedRole.id, {
-        user: targetUser,
-        company: { id: companyId } as Company,
-        role,
-      });
+    if (userCompanyRoleRecord) {
+      // Update existing roles
+      const updatedRoles = { roles };
+      userCompanyRoleRecord =
+        await this.userCompanyRoleRepository.save(updatedRoles);
     } else {
-      await this.userCompanyRoleRepository.create({
+      // Create a new user-company-role relation
+      userCompanyRoleRecord = await this.userCompanyRoleRepository.create({
         user: targetUser,
         company: { id: companyId } as Company,
-        role,
+        roles,
       });
     }
-    return { message: `User assigned as ${roleName} successfully` };
+
+    return {
+      message: `User assigned roles: ${roleNames.join(', ')} successfully`,
+    };
   }
 }
