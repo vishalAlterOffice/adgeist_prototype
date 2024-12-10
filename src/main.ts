@@ -24,8 +24,19 @@ async function bootstrap() {
     .setDescription('Backend for Adgeist application')
     .setVersion('1.0')
     .addTag('Adgeist')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        description: `Please enter token in following format: Bearer <JWT>`,
+        name: 'Authorization',
+        bearerFormat: 'Bearer',
+        scheme: 'Bearer',
+        type: 'http',
+        in: 'Header',
+      },
+      'jwt', // This name here is important for matching up with @ApiBearerAuth() in your controller!
+    )
     .build();
+
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api', app, document);
 

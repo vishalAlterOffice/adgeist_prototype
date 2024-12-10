@@ -9,9 +9,11 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './services/users.service';
 import { sendResponse } from 'src/shared/util/sendResponse';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('users')
 @UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth('jwt')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

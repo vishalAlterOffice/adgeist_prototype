@@ -21,10 +21,11 @@ import { AdvertiserDto } from './dto/advertiser.dto';
 import { AdvertiserService } from './services/advertiser.service';
 import { PublisherService } from './services/publisher.service';
 import { PublisherDto } from './dto/publisher.dto';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { CompanyDto } from './dto/company.dto';
 
 @Controller('company')
+@ApiBearerAuth('jwt')
 @UseGuards(AuthGuard('jwt'))
 export class CompanyController {
   constructor(
@@ -128,7 +129,7 @@ export class CompanyController {
   @ApiBody({ type: AdvertiserDto })
   async updateAdvertiser(
     @Param('id') companyId: number,
-    @Body() advertiserDto: AdvertiserDto,
+    @Body() advertiserDto: Partial<AdvertiserDto>,
     @Req() req: any,
   ) {
     const updatedAdvertiser = await this.advertiserService.update(

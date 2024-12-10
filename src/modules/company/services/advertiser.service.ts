@@ -56,9 +56,9 @@ export class AdvertiserService {
     companyId: number,
     advertiserDto: Partial<AdvertiserDto>,
   ): Promise<{ advertiser: Partial<Advertiser> }> {
-    const company = await this.companyRepository.findOne({
-      id: companyId,
-    });
+    const company = await this.companyRepository.findOneByRelation(companyId, [
+      'advertiser',
+    ]);
 
     if (!company) {
       throw new NotFoundException(
@@ -92,9 +92,9 @@ export class AdvertiserService {
   async getAdvertiserById(
     companyId: number,
   ): Promise<{ advertiser: Advertiser }> {
-    const company = await this.companyRepository.findOne({
-      id: companyId,
-    });
+    const company = await this.companyRepository.findOneByRelation(companyId, [
+      'advertiser',
+    ]);
 
     return { advertiser: company.advertiser };
   }

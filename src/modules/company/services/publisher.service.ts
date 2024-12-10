@@ -58,9 +58,9 @@ export class PublisherService {
     companyId: number,
     publisherDto: Partial<PublisherDto>,
   ): Promise<{ publisher: Partial<Publisher> }> {
-    const company = await this.companyRepository.findOne({
-      id: companyId,
-    });
+    const company = await this.companyRepository.findOneByRelation(companyId, [
+      'publisher',
+    ]);
 
     if (!company) {
       throw new NotFoundException(
@@ -92,9 +92,9 @@ export class PublisherService {
 
   // Get publisher by ID
   async getPublisherById(companyId: number): Promise<{ publisher: Publisher }> {
-    const company = await this.companyRepository.findOne({
-      id: companyId,
-    });
+    const company = await this.companyRepository.findOneByRelation(companyId, [
+      'publisher',
+    ]);
 
     return { publisher: company.publisher };
   }
