@@ -6,47 +6,50 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { CompanyService } from './services/company.service';
 import { Roles } from 'src/shared/decorators/roles.decorator';
 import { RoleGuard } from 'src/shared/guards/role.guard';
 import { Public } from '../auth/auth.decorator';
-import { sendResponse } from 'src/shared/util/sendResponse';
-import { AssignRoleDto } from './dto/assignRole.dto';
-import { AdvertiserDto } from './dto/advertiser.dto';
+import { CompanyService } from './services/company.service';
 import { AdvertiserService } from './services/advertiser.service';
 import { PublisherService } from './services/publisher.service';
+import { sendResponse } from 'src/shared/util/sendResponse';
+import { CompanyDto } from './dto/company.dto';
+import { AssignRoleDto } from './dto/assignRole.dto';
+import { AdvertiserDto } from './dto/advertiser.dto';
 import { PublisherDto } from './dto/publisher.dto';
 import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { CompanyDto } from './dto/company.dto';
 
 @Controller('company')
-@ApiBearerAuth('jwt')
 @UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth('jwt')
 export class CompanyController {
   constructor(
-    private companyService: CompanyService,
-    private advertiserService: AdvertiserService,
-    private publisherService: PublisherService,
+    private readonly companyService: CompanyService,
+    private readonly advertiserService: AdvertiserService,
+    private readonly publisherService: PublisherService,
   ) {}
 
   @Public()
   @Get('all')
-  async getAllCompany() {
-    const allCompany = await this.companyService.getAllCompany();
-    return sendResponse(true, 'All company fetched successfully', allCompany);
+  async getAllCompany(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    const allCompany = await this.companyService.getAllCompany(page, limit);
+    return sendResponse(true, 'All companies fetched successfully', allCompany);
   }
 
   @Get(':id')
-  @Roles('MEMBER', 'ADMIN') // Define required roles
+  @Roles('MEMBER', 'ADMIN')
   @UseGuards(RoleGuard)
   async getCompanyById(@Param('id') id: number, @Req() req: any) {
-    const user = req.user;
-    const company = await this.companyService.getCompanyById(id, user);
+    const company = await this.companyService.getCompanyById(id, req.user);
     return sendResponse(true, 'Company details', company);
   }
 
@@ -59,47 +62,43 @@ export class CompanyController {
   }
 
   @Patch(':id')
-  @Roles('ADMIN') // Only ADMIN can update
+  @Roles('ADMIN')
   @UseGuards(RoleGuard)
   @ApiBody({ type: CompanyDto })
   async updateCompany(
     @Param('id') id: number,
-    @Body() companyDto: any,
+    @Body() companyDto: Partial<CompanyDto>,
     @Req() req: any,
   ) {
-    const user = req.user;
     const updatedCompany = await this.companyService.update(
       id,
       companyDto,
-      user,
+      req.user,
     );
     return sendResponse(true, 'Company updated', updatedCompany);
   }
 
   @Delete(':id')
-  @Roles('ADMIN') // Only ADMIN can delete
+  @Roles('ADMIN')
   @UseGuards(RoleGuard)
-  async delete(@Param('id') id: number, @Req() req: any) {
-    const user = req.user;
-    return this.companyService.delete(id, user);
+  async deleteCompany(@Param('id') id: number, @Req() req: any) {
+    await this.companyService.delete(id, req.user);
+    return sendResponse(true, 'Company deleted successfully');
   }
 
   @Post(':id/assign-role')
-  @Roles('ADMIN') // Only ADMIN can assign roles
+  @Roles('ADMIN')
   @UseGuards(RoleGuard)
   @ApiBody({ type: AssignRoleDto })
   async assignRole(
     @Param('id') id: number,
     @Body() assignRoleDto: AssignRoleDto,
-    @Req() req: any,
   ) {
-    const user = req.user;
     const updatedRoles = await this.companyService.assignRole(
       id,
       assignRoleDto.targetUserId,
       assignRoleDto.roleName,
     );
-
     return sendResponse(true, 'Role assigned successfully', updatedRoles);
   }
 
@@ -111,13 +110,14 @@ export class CompanyController {
   }
 
   @Post(':id/advertiser')
+  @Roles('ADMIN')
   @ApiBody({ type: AdvertiserDto })
   async createAdvertiser(
     @Param('id') companyId: number,
     @Body() advertiserDto: AdvertiserDto,
-    @Request() req: any,
+    @Req() req: any,
   ) {
-    const newAdvertiser = await this.advertiserService.create(
+    const newAdvertiser = await this.advertiserService.createAdvertiser(
       companyId,
       advertiserDto,
       req.user,
@@ -126,32 +126,32 @@ export class CompanyController {
   }
 
   @Patch(':id/advertiser')
+  @Roles('ADMIN')
   @ApiBody({ type: AdvertiserDto })
   async updateAdvertiser(
     @Param('id') companyId: number,
     @Body() advertiserDto: Partial<AdvertiserDto>,
-    @Req() req: any,
   ) {
-    const updatedAdvertiser = await this.advertiserService.update(
+    const updatedAdvertiser = await this.advertiserService.updateAdvertiser(
       companyId,
       advertiserDto,
     );
     return sendResponse(true, 'Advertiser updated', updatedAdvertiser);
   }
 
-  @Get(':id/publisher')
-  @Public()
-  async getPublisher(@Param('id') id: number, @Request() req: any) {
+  @Get('publisher/:id')
+  async getPublisher(@Param('id') id: number) {
     const publisher = await this.publisherService.getPublisherById(id);
     return sendResponse(true, 'Publisher details', publisher);
   }
 
   @Post(':id/publisher')
+  @Roles('ADMIN')
   @ApiBody({ type: PublisherDto })
   async createPublisher(
     @Param('id') companyId: number,
     @Body() publisherDto: PublisherDto,
-    @Request() req: any,
+    @Req() req: any,
   ) {
     const newPublisher = await this.publisherService.create(
       companyId,
@@ -162,16 +162,16 @@ export class CompanyController {
   }
 
   @Patch(':id/publisher')
+  @Roles('ADMIN')
   @ApiBody({ type: PublisherDto })
   async updatePublisher(
     @Param('id') companyId: number,
-    @Body() publisherDto: PublisherDto,
-    @Req() req: any,
+    @Body() publisherDto: Partial<PublisherDto>,
   ) {
     const updatedPublisher = await this.publisherService.update(
       companyId,
       publisherDto,
     );
-    return sendResponse(true, 'Publisher Updated', updatedPublisher);
+    return sendResponse(true, 'Publisher updated', updatedPublisher);
   }
 }

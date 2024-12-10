@@ -6,8 +6,8 @@ import UserRepository from '../repositories/user.repository';
 export class UsersService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async getAllUsers() {
-    return this.userRepository.getAll();
+  async getAllUsers(page: number = 1, limit: number = 10) {
+    return this.userRepository.getAll(+page, +limit);
   }
 
   async getUserById(id: number): Promise<User> {

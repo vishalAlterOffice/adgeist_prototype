@@ -25,13 +25,8 @@ export class CompanyService {
     companyDto: CompanyDto,
     user: User,
   ): Promise<{ company: Partial<Company> }> {
-    const isCompanyExists = await this.companyRepository.findOne({
-      GST_No: companyDto.GST_No,
-    });
-
-    if (isCompanyExists) {
-      throw new BadRequestException('GST number already exists');
-    }
+    // Check for duplicate GST number
+    await this.ensureUniqueGST(companyDto.GST_No);
 
     // Create a new company
     const newCompany = await this.companyRepository.create(companyDto);
@@ -60,16 +55,7 @@ export class CompanyService {
     user: User,
   ): Promise<{ company: Partial<Company> }> {
     // Check for duplicate GST number
-    const existingCompany = await this.companyRepository.findOne({
-      GST_No: companyDto.GST_No,
-    });
-
-    if (
-      existingCompany &&
-      existingCompany.id !== companyId // Ensure the existing company is not the same as the one being updated
-    ) {
-      throw new BadRequestException('GST number already exists');
-    }
+    await this.ensureUniqueGST(companyDto.GST_No, companyId);
 
     // Update the company
     const updatedCompany = await this.companyRepository.update(
@@ -93,13 +79,22 @@ export class CompanyService {
   }
 
   // Get all companies
-  async getAllCompany(): Promise<{ company: Company[] }> {
-    const companyDetails = await this.companyRepository.getAllWithRelation([
-      'advertiser',
-      'publisher',
-    ]);
+  async getAllCompany(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{ company: Company[]; totalPages: number }> {
+    const allCompanies = await this.companyRepository.getAllWithRelation(
+      ['advertiser', 'publisher'],
+      page,
+      limit,
+    );
 
-    return { company: companyDetails };
+    const totalPages = Math.ceil(allCompanies.length / limit);
+
+    return {
+      company: allCompanies,
+      totalPages,
+    };
   }
 
   // Get company by ID
@@ -109,11 +104,20 @@ export class CompanyService {
   ): Promise<{ company: Company }> {
     const companyDetails = await this.companyRepository.findOneByRelation(
       companyId,
-      ['advertiser', 'publisher', 'userCompanyRoles', 'userCompanyRoles.user'], // Include nested relation for users,
+      ['advertiser', 'publisher', 'userCompanyRoles', 'userCompanyRoles.user'],
     );
 
     if (!companyDetails) {
       throw new NotFoundException('Company not found');
+    }
+
+    // Delete password of user
+    if (companyDetails.userCompanyRoles) {
+      companyDetails.userCompanyRoles.map((user) => {
+        if (user.user.password) {
+          delete user.user.password;
+        }
+      });
     }
 
     return { company: companyDetails };
@@ -180,5 +184,22 @@ export class CompanyService {
     return {
       message: `User assigned roles: ${roleNames.join(', ')} successfully`,
     };
+  }
+
+  // Helper
+
+  // Validate Unique GST Number
+  private async ensureUniqueGST(
+    GST_No: string,
+    excludeCompanyId?: number,
+  ): Promise<void> {
+    const existingCompany = await this.companyRepository.findOne({ GST_No });
+
+    if (
+      existingCompany &&
+      (!excludeCompanyId || existingCompany.id !== excludeCompanyId)
+    ) {
+      throw new BadRequestException('GST number already exists');
+    }
   }
 }

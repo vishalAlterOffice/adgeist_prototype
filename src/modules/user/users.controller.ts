@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './services/users.service';
@@ -27,15 +28,21 @@ export class UsersController {
   }
 
   @Get()
-  async getAllUsers() {
-    const users = await this.usersService.getAllUsers();
-    const allUsers = users.map(({ password, ...user }) => user);
+  async getAllUsers(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    const users = await this.usersService.getAllUsers(page, limit);
+    const allUsers = users?.map(({ password, ...user }) => user);
     return sendResponse(true, 'All users fetched', allUsers);
   }
 
   @Get(':id')
-  async getUserById(@Param('id') id: string) {
+  async getUserById(@Param('id') id: number) {
     const user = await this.usersService.getUserById(Number(id));
+    if (!user) {
+      return sendResponse(true, 'User not found');
+    }
     const { password, ...userWithoutPassword } = user;
     return sendResponse(true, 'User fetched successfully', userWithoutPassword);
   }

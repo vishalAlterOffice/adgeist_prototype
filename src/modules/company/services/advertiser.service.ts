@@ -4,10 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import AdvertiserRepository from '../repositories/advertiser.repository';
-import { AdvertiserDto } from '../dto/advertiser.dto';
+import CompanyRepository from '../repositories/company.repository';
 import Advertiser from '../entities/advertiser.entity';
 import User from 'src/modules/user/entities/user.entity';
-import CompanyRepository from 'src/modules/company/repositories/company.repository';
+import { AdvertiserDto } from '../dto/advertiser.dto';
+import { ensureArray } from 'src/shared/util/helper';
 
 @Injectable()
 export class AdvertiserService {
@@ -16,19 +17,14 @@ export class AdvertiserService {
     private readonly companyRepository: CompanyRepository,
   ) {}
 
-  // Create a new company
-  async create(
+  // Create Advertiser
+  async createAdvertiser(
     companyId: number,
     advertiserDto: AdvertiserDto,
     user: User,
-  ): Promise<{ advertiser: any }> {
-    // Check if the company exists
-    const company = await this.companyRepository.findOne({ id: companyId });
-    if (!company) {
-      throw new NotFoundException(`Company with ID ${companyId} not found`);
-    }
+  ): Promise<{ advertiser: Advertiser }> {
+    const company = await this.findCompanyById(companyId);
 
-    // Check if the company already has an advertiser
     const existingAdvertiser = await this.advertiserRepository.findOne({
       company: { id: companyId },
     });
@@ -39,63 +35,60 @@ export class AdvertiserService {
       );
     }
 
-    // Create and save the new advertiser
     const advertiser = await this.advertiserRepository.create({
       ...advertiserDto,
-      marketingHandledBy: Array.isArray(advertiserDto.marketingHandledBy)
-        ? advertiserDto.marketingHandledBy
-        : [advertiserDto.marketingHandledBy], // Ensure type is an array
+      marketingHandledBy: ensureArray(advertiserDto.marketingHandledBy),
       company,
     });
 
-    return { advertiser: advertiser };
+    return { advertiser };
   }
 
-  // Update a company (only allowed for ADMIN users of the company)
-  async update(
+  // Update Advertiser
+  async updateAdvertiser(
     companyId: number,
     advertiserDto: Partial<AdvertiserDto>,
   ): Promise<{ advertiser: Partial<Advertiser> }> {
-    const company = await this.companyRepository.findOneByRelation(companyId, [
-      'advertiser',
-    ]);
+    const company = await this.findCompanyById(companyId, ['advertiser']);
 
-    if (!company) {
-      throw new NotFoundException(
-        `Advertiser with ${companyId} ID is not found`,
-      );
-    }
-
-    // update Advertiser
     const updatedAdvertiser = await this.advertiserRepository.update(
       company.advertiser.id,
-      {
-        ...advertiserDto,
-      },
+      advertiserDto,
     );
 
-    if (!updatedAdvertiser)
+    if (!updatedAdvertiser) {
       throw new NotFoundException('Failed to update Advertiser');
+    }
 
     return { advertiser: updatedAdvertiser };
   }
 
-  // Delete a company (only allowed for ADMIN users of the company)
-  async delete(advertiserId: number, user: User): Promise<{ message: string }> {
-    // Delete the company
+  // Delete Advertiser
+  async deleteAdvertiser(advertiserId: number): Promise<{ message: string }> {
     await this.advertiserRepository.destroy(advertiserId);
-
     return { message: 'Advertiser deleted successfully' };
   }
 
-  // Get advertiser by ID
+  // Get Advertiser by ID
   async getAdvertiserById(
     companyId: number,
   ): Promise<{ advertiser: Advertiser }> {
-    const company = await this.companyRepository.findOneByRelation(companyId, [
-      'advertiser',
-    ]);
-
+    const company = await this.findCompanyById(companyId, ['advertiser']);
     return { advertiser: company.advertiser };
+  }
+
+  // Helper: Find Company with Relations
+  private async findCompanyById(
+    companyId: number,
+    relations: string[] = [],
+  ): Promise<any> {
+    const company = await this.companyRepository.findOneByRelation(
+      companyId,
+      relations,
+    );
+    if (!company) {
+      throw new NotFoundException(`Company with ID ${companyId} not found`);
+    }
+    return company;
   }
 }

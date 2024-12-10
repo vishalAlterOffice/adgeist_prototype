@@ -5,7 +5,7 @@ import { AuthService } from '../../service/auth.service';
 import { SignUpDto } from '../../dto/signup.dto';
 import { LoginDto } from '../../dto/login.dto';
 
-jest.mock('../service/auth.service');
+jest.mock('../../service/auth.service');
 
 describe('AuthController', () => {
   let authController: AuthController;

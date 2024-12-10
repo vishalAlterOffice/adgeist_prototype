@@ -8,6 +8,7 @@ import { PublisherDto } from '../dto/publisher.dto';
 import User from 'src/modules/user/entities/user.entity';
 import CompanyRepository from 'src/modules/company/repositories/company.repository';
 import Publisher from '../entities/publisher.entity';
+import { ensureArray } from 'src/shared/util/helper';
 
 @Injectable()
 export class PublisherService {
@@ -23,10 +24,7 @@ export class PublisherService {
     user: User,
   ): Promise<{ publisher: any }> {
     // Check if the company exists
-    const company = await this.companyRepository.findOne({ id: companyId });
-    if (!company) {
-      throw new NotFoundException(`Company with ID ${companyId} not found`);
-    }
+    const company = await this.findCompanyById(companyId);
 
     // Check if the company already has an advertiser
     const existingAdvertiser = await this.publisherRepository.findOne({
@@ -42,15 +40,13 @@ export class PublisherService {
     // Create and save the new publisher
     const publisher = await this.publisherRepository.create({
       ...publisherDto,
-      type: Array.isArray(publisherDto.type)
-        ? publisherDto.type
-        : [publisherDto.type], // Ensure type is an array
+      type: ensureArray(publisherDto.type), // Ensure type is an array
       company,
     });
 
     console.log('publisher', publisher);
 
-    return { publisher: publisher };
+    return { publisher };
   }
 
   // Update a company (only allowed for ADMIN users of the company)
@@ -58,9 +54,7 @@ export class PublisherService {
     companyId: number,
     publisherDto: Partial<PublisherDto>,
   ): Promise<{ publisher: Partial<Publisher> }> {
-    const company = await this.companyRepository.findOneByRelation(companyId, [
-      'publisher',
-    ]);
+    const company = await this.findCompanyById(companyId, ['publisher']);
 
     if (!company) {
       throw new NotFoundException(
@@ -92,10 +86,23 @@ export class PublisherService {
 
   // Get publisher by ID
   async getPublisherById(companyId: number): Promise<{ publisher: Publisher }> {
-    const company = await this.companyRepository.findOneByRelation(companyId, [
-      'publisher',
-    ]);
+    const company = await this.findCompanyById(companyId, ['publisher']);
 
     return { publisher: company.publisher };
+  }
+
+  // Helper: Find Company with Relations
+  private async findCompanyById(
+    companyId: number,
+    relations: string[] = [],
+  ): Promise<any> {
+    const company = await this.companyRepository.findOneByRelation(
+      companyId,
+      relations,
+    );
+    if (!company) {
+      throw new NotFoundException(`Company with ID ${companyId} not found`);
+    }
+    return company;
   }
 }

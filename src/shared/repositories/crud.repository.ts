@@ -31,19 +31,31 @@ export class CrudRepository<T> {
   }
 
   // Get all entities
-  async getAll(): Promise<T[]> {
+  async getAll(page: number = 1, limit: number = 10): Promise<T[]> {
     try {
-      return await this.repository.find();
+      const skip = (page - 1) * limit;
+      return await this.repository.find({
+        take: limit,
+        skip: skip,
+      });
     } catch (error) {
       this.handleError('getAll', error);
     }
   }
 
   // Get all with relations
-  async getAllWithRelation(relation: string[]): Promise<T[]> {
+  async getAllWithRelation<T>(
+    relation: string[],
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<any> {
     try {
+      const skip = (page - 1) * limit;
+
       return await this.repository.find({
         relations: [...relation],
+        take: limit,
+        skip: skip,
       });
     } catch (error) {
       this.handleError('getAll', error);
