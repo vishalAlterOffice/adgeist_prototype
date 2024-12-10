@@ -35,6 +35,7 @@ export class CompanyController {
     private readonly publisherService: PublisherService,
   ) {}
 
+  // Get all companies
   @Public()
   @Get('all')
   async getAllCompany(
@@ -45,6 +46,7 @@ export class CompanyController {
     return sendResponse(true, 'All companies fetched successfully', allCompany);
   }
 
+  // Get company by ID
   @Get(':id')
   @Roles('MEMBER', 'ADMIN')
   @UseGuards(RoleGuard)
@@ -53,6 +55,7 @@ export class CompanyController {
     return sendResponse(true, 'Company details', company);
   }
 
+  // Create new company
   @Post('')
   @Public()
   @ApiBody({ type: CompanyDto })
@@ -61,6 +64,7 @@ export class CompanyController {
     return sendResponse(true, 'Company created', newCompany);
   }
 
+  // Update existing company
   @Patch(':id')
   @Roles('ADMIN')
   @UseGuards(RoleGuard)
@@ -78,14 +82,16 @@ export class CompanyController {
     return sendResponse(true, 'Company updated', updatedCompany);
   }
 
-  @Delete(':id')
-  @Roles('ADMIN')
-  @UseGuards(RoleGuard)
-  async deleteCompany(@Param('id') id: number, @Req() req: any) {
-    await this.companyService.delete(id, req.user);
-    return sendResponse(true, 'Company deleted successfully');
-  }
+  // Delete existing company
+  // @Delete(':id')
+  // @Roles('ADMIN')
+  // @UseGuards(RoleGuard)
+  // async deleteCompany(@Param('id') id: number, @Req() req: any) {
+  //   await this.companyService.delete(id, req.user);
+  //   return sendResponse(true, 'Company deleted successfully');
+  // }
 
+  // Assign role to other user ass ADMIN/MEMBER
   @Post(':id/assign-role')
   @Roles('ADMIN')
   @UseGuards(RoleGuard)
@@ -102,14 +108,18 @@ export class CompanyController {
     return sendResponse(true, 'Role assigned successfully', updatedRoles);
   }
 
+  // Get advertiser details by ID
   @Get('advertiser/:id')
-  @Public()
+  @UseGuards(RoleGuard)
+  @Roles('ADMIN', 'MEMBER')
   async getAdvertiser(@Param('id') id: number, @Request() req: any) {
     const advertiser = await this.advertiserService.getAdvertiserById(id);
     return sendResponse(true, 'Advertiser details', advertiser);
   }
 
+  // Create new advertiser for existing company
   @Post(':id/advertiser')
+  @UseGuards(RoleGuard)
   @Roles('ADMIN')
   @ApiBody({ type: AdvertiserDto })
   async createAdvertiser(
@@ -125,7 +135,9 @@ export class CompanyController {
     return sendResponse(true, 'Advertiser created', newAdvertiser);
   }
 
+  // Update advertiser for company
   @Patch(':id/advertiser')
+  @UseGuards(RoleGuard)
   @Roles('ADMIN')
   @ApiBody({ type: AdvertiserDto })
   async updateAdvertiser(
@@ -139,13 +151,18 @@ export class CompanyController {
     return sendResponse(true, 'Advertiser updated', updatedAdvertiser);
   }
 
+  /// Get publisher details by ID
   @Get('publisher/:id')
+  @UseGuards(RoleGuard)
+  @Roles('ADMIN', 'MEMBER')
   async getPublisher(@Param('id') id: number) {
     const publisher = await this.publisherService.getPublisherById(id);
     return sendResponse(true, 'Publisher details', publisher);
   }
 
+  // Create new publisher for company
   @Post(':id/publisher')
+  @UseGuards(RoleGuard)
   @Roles('ADMIN')
   @ApiBody({ type: PublisherDto })
   async createPublisher(
@@ -161,7 +178,9 @@ export class CompanyController {
     return sendResponse(true, 'Publisher created', newPublisher);
   }
 
+  // Update existing publisher
   @Patch(':id/publisher')
+  @UseGuards(RoleGuard)
   @Roles('ADMIN')
   @ApiBody({ type: PublisherDto })
   async updatePublisher(

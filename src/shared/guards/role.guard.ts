@@ -8,12 +8,14 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from 'src/modules/auth/auth.decorator';
 import { ROLES_KEY } from 'src/shared/decorators/roles.decorator';
 import UserCompanyRoleRepository from 'src/modules/company/repositories/userCompanyRole.repository';
+import { AdvertiserService } from 'src/modules/company/services/advertiser.service';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly userCompanyRoleRepository: UserCompanyRoleRepository,
+    private readonly advertiserService: AdvertiserService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -43,6 +45,9 @@ export class RoleGuard implements CanActivate {
     if (!user || !companyId) {
       throw new ForbiddenException('Invalid access');
     }
+
+    // Check if company exists
+    await this.advertiserService.findCompanyById(companyId);
 
     // Fetch roles of the user for the company
     const userCompanyRoles =

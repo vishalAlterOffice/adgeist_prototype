@@ -78,7 +78,7 @@ export class AdvertiserService {
   }
 
   // Helper: Find Company with Relations
-  private async findCompanyById(
+  async findCompanyById(
     companyId: number,
     relations: string[] = [],
   ): Promise<any> {
