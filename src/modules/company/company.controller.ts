@@ -113,7 +113,8 @@ export class CompanyController {
   @UseGuards(RoleGuard)
   @Roles('ADMIN', 'MEMBER')
   async getAdvertiser(@Param('id') id: number, @Request() req: any) {
-    const advertiser = await this.advertiserService.getAdvertiserById(id);
+    const advertiser =
+      await this.advertiserService.getAdvertiserByCompanyId(id);
     return sendResponse(true, 'Advertiser details', advertiser);
   }
 
@@ -156,7 +157,7 @@ export class CompanyController {
   @UseGuards(RoleGuard)
   @Roles('ADMIN', 'MEMBER')
   async getPublisher(@Param('id') id: number) {
-    const publisher = await this.publisherService.getPublisherById(id);
+    const publisher = await this.publisherService.getPublisherByCompanyId(id);
     return sendResponse(true, 'Publisher details', publisher);
   }
 
@@ -170,7 +171,7 @@ export class CompanyController {
     @Body() publisherDto: PublisherDto,
     @Req() req: any,
   ) {
-    const newPublisher = await this.publisherService.create(
+    const newPublisher = await this.publisherService.createPublisher(
       companyId,
       publisherDto,
       req.user,
@@ -187,7 +188,7 @@ export class CompanyController {
     @Param('id') companyId: number,
     @Body() publisherDto: Partial<PublisherDto>,
   ) {
-    const updatedPublisher = await this.publisherService.update(
+    const updatedPublisher = await this.publisherService.updatePublisher(
       companyId,
       publisherDto,
     );

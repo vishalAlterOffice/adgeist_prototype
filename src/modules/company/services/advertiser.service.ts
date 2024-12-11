@@ -70,7 +70,7 @@ export class AdvertiserService {
   }
 
   // Get Advertiser by ID
-  async getAdvertiserById(
+  async getAdvertiserByCompanyId(
     companyId: number,
   ): Promise<{ advertiser: Advertiser }> {
     const company = await this.findCompanyById(companyId, ['advertiser']);

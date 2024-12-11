@@ -10,6 +10,8 @@ import UserRepository from 'src/modules/user/repositories/user.repository';
 import User from 'src/modules/user/entities/user.entity';
 import RoleRepository from 'src/shared/repositories/role.repository';
 import UserCompanyRoleRepository from '../repositories/userCompanyRole.repository';
+import { DataSource, QueryRunner } from 'typeorm';
+import UserCompanyRole from 'src/modules/user/entities/user_companyRole.entity';
 
 @Injectable()
 export class CompanyService {
@@ -18,34 +20,59 @@ export class CompanyService {
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
     private readonly userCompanyRoleRepository: UserCompanyRoleRepository,
+    private readonly dataSource: DataSource,
   ) {}
 
-  // Create a new company
+  // Create a new company with transaction
   async create(
     companyDto: CompanyDto,
     user: User,
   ): Promise<{ company: Partial<Company> }> {
-    // Check for duplicate GST number
-    await this.ensureUniqueGST(companyDto.GST_No);
+    // Start a new query runner
+    const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // Create a new company
-    const newCompany = await this.companyRepository.create(companyDto);
+    try {
+      // Check for duplicate GST number
+      const existingCompany = await this.companyRepository.findOne({
+        GST_No: companyDto.GST_No,
+      });
+      if (existingCompany) {
+        throw new BadRequestException('GST number already exists');
+      }
 
-    // Assign the user as ADMIN for the created company
-    const adminRole = await this.roleRepository.findOne({
-      role_name: 'ADMIN',
-    });
-    if (!adminRole) {
-      throw new NotFoundException('ADMIN role not found');
+      // Create a new company
+      const companyEntity = queryRunner.manager.create(Company, companyDto);
+      const newCompany = await queryRunner.manager.save(companyEntity);
+
+      // Assign the user as ADMIN for the created company
+      const adminRole = await this.roleRepository.findOne({
+        role_name: 'ADMIN',
+      });
+      if (!adminRole) {
+        throw new NotFoundException('ADMIN role not found');
+      }
+
+      const userCompanyRole = queryRunner.manager.create(UserCompanyRole, {
+        user,
+        company: newCompany,
+        roles: [adminRole],
+      });
+      await queryRunner.manager.save(userCompanyRole);
+
+      // Commit the transaction
+      await queryRunner.commitTransaction();
+
+      return { company: newCompany };
+    } catch (error) {
+      // Rollback the transaction on error
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release the query runner
+      await queryRunner.release();
     }
-
-    await this.userCompanyRoleRepository.create({
-      user: user,
-      company: newCompany,
-      roles: [adminRole],
-    });
-
-    return { company: newCompany };
   }
 
   // Update a company (only allowed for ADMIN users of the company)

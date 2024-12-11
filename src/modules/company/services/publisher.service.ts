@@ -9,22 +9,24 @@ import User from 'src/modules/user/entities/user.entity';
 import CompanyRepository from 'src/modules/company/repositories/company.repository';
 import Publisher from '../entities/publisher.entity';
 import { ensureArray } from 'src/shared/util/helper';
+import { AdvertiserService } from './advertiser.service';
 
 @Injectable()
 export class PublisherService {
   constructor(
     private readonly publisherRepository: PublisherRepository,
     private readonly companyRepository: CompanyRepository,
+    private readonly advertiserService: AdvertiserService,
   ) {}
 
   // Create a new company
-  async create(
+  async createPublisher(
     companyId: number,
     publisherDto: PublisherDto,
     user: User,
   ): Promise<{ publisher: any }> {
     // Check if the company exists
-    const company = await this.findCompanyById(companyId);
+    const company = await this.advertiserService.findCompanyById(companyId);
 
     // Check if the company already has an advertiser
     const existingAdvertiser = await this.publisherRepository.findOne({
@@ -44,17 +46,17 @@ export class PublisherService {
       company,
     });
 
-    console.log('publisher', publisher);
-
     return { publisher };
   }
 
   // Update a company (only allowed for ADMIN users of the company)
-  async update(
+  async updatePublisher(
     companyId: number,
     publisherDto: Partial<PublisherDto>,
   ): Promise<{ publisher: Partial<Publisher> }> {
-    const company = await this.findCompanyById(companyId, ['publisher']);
+    const company = await this.advertiserService.findCompanyById(companyId, [
+      'publisher',
+    ]);
 
     if (!company) {
       throw new NotFoundException(
@@ -77,7 +79,7 @@ export class PublisherService {
   }
 
   // Delete publisher
-  async delete(publisherId: number): Promise<{ message: string }> {
+  async deletePublisher(publisherId: number): Promise<{ message: string }> {
     // Delete the company
     await this.publisherRepository.destroy(publisherId);
 
@@ -85,24 +87,13 @@ export class PublisherService {
   }
 
   // Get publisher by ID
-  async getPublisherById(companyId: number): Promise<{ publisher: Publisher }> {
-    const company = await this.findCompanyById(companyId, ['publisher']);
+  async getPublisherByCompanyId(
+    companyId: number,
+  ): Promise<{ publisher: Publisher }> {
+    const company = await this.advertiserService.findCompanyById(companyId, [
+      'publisher',
+    ]);
 
     return { publisher: company.publisher };
-  }
-
-  // Helper: Find Company with Relations
-  private async findCompanyById(
-    companyId: number,
-    relations: string[] = [],
-  ): Promise<any> {
-    const company = await this.companyRepository.findOneByRelation(
-      companyId,
-      relations,
-    );
-    if (!company) {
-      throw new NotFoundException(`Company with ID ${companyId} not found`);
-    }
-    return company;
   }
 }
