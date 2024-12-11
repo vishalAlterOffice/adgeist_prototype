@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import PublisherRepository from '../repositories/publisher.repository';
 import { PublisherDto } from '../dto/publisher.dto';
-import User from 'src/modules/user/entities/user.entity';
 import CompanyRepository from 'src/modules/company/repositories/company.repository';
 import Publisher from '../entities/publisher.entity';
 import { ensureArray } from 'src/shared/util/helper';
@@ -23,7 +22,6 @@ export class PublisherService {
   async createPublisher(
     companyId: number,
     publisherDto: PublisherDto,
-    user: User,
   ): Promise<{ publisher: any }> {
     // Check if the company exists
     const company = await this.advertiserService.findCompanyById(companyId);

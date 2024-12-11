@@ -7,10 +7,14 @@ import { CompanyService } from '../../services/company.service';
 import { AdvertiserService } from '../../services/advertiser.service';
 import { PublisherService } from '../../services/publisher.service';
 import { AssignRoleDto } from '../../dto/assignRole.dto';
-import { AdvertiserDto } from '../../dto/advertiser.dto';
 import { PublisherDto } from '../../dto/publisher.dto';
 import { RoleName } from 'src/shared/util/roles';
-import { CompanyDto } from '../../dto/company.dto';
+import {
+  fakeAdvertiserDto,
+  mockAdvertiserDto,
+  mockCompanyDto,
+  mockPublisherDto,
+} from 'src/shared/tests/testData';
 
 describe('CompanyController', () => {
   let controller: CompanyController;
@@ -36,7 +40,7 @@ describe('CompanyController', () => {
         {
           provide: AdvertiserService,
           useValue: {
-            getAdvertiserById: jest.fn(),
+            getAdvertiserByCompanyId: jest.fn(),
             createAdvertiser: jest.fn(),
             updateAdvertiser: jest.fn(),
           },
@@ -44,9 +48,9 @@ describe('CompanyController', () => {
         {
           provide: PublisherService,
           useValue: {
-            getPublisherById: jest.fn(),
-            create: jest.fn(),
-            update: jest.fn(),
+            getPublisherByCompanyId: jest.fn(),
+            createPublisher: jest.fn(),
+            updatePublisher: jest.fn(),
           },
         },
       ],
@@ -68,23 +72,6 @@ describe('CompanyController', () => {
   // Advertiser routes
   describe('create Company', () => {
     it('should create a new company', async () => {
-      const mockCompanyDto: CompanyDto = {
-        company_name: 'google',
-        GST_No: 'BHCCDY9928880',
-        address: 'xyz, abc',
-        city: 'Bangalore',
-        pin_code: 112233,
-        industry: 'IT',
-        country: 'India',
-        contact_no: '1234567890',
-      };
-      const mockCompany = {
-        id: 1,
-        advertiser: null,
-        publisher: null,
-        ...mockCompanyDto,
-      };
-
       // jest
       //   .spyOn(advertiserService, 'createAdvertiser')
       //   .mockResolvedValue(mockAdvertiser);
@@ -130,23 +117,13 @@ describe('CompanyController', () => {
   // Advertiser routes
   describe('createAdvertiser', () => {
     it('should create a new advertiser', async () => {
-      const mockAdvertiserDto: AdvertiserDto = {
-        marketingHandledBy: ['agency'],
-        annualRevenue: 20000,
-        marketingBudget: 28000,
-        website_url: 'www.google.com',
-      };
       const mockAdvertiser = { id: 1, ...mockAdvertiserDto };
 
       // jest
       //   .spyOn(advertiserService, 'createAdvertiser')
       //   .mockResolvedValue(mockAdvertiser);
 
-      const result = await controller.createAdvertiser(
-        1,
-        mockAdvertiserDto,
-        {},
-      );
+      const result = await controller.createAdvertiser(1, mockAdvertiserDto);
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Advertiser created');
@@ -157,32 +134,14 @@ describe('CompanyController', () => {
         .spyOn(advertiserService, 'createAdvertiser')
         .mockRejectedValue(new Error('Validation failed'));
 
-      const mockAdvertiserDto: AdvertiserDto = {
-        marketingHandledBy: ['dfsdfsd'], // Value other than ENUMs
-        annualRevenue: 1212,
-        marketingBudget: 28000,
-        website_url: 'www.google.com',
-      };
       await expect(
-        controller.createAdvertiser(1, mockAdvertiserDto, {}),
+        controller.createAdvertiser(1, fakeAdvertiserDto),
       ).rejects.toThrow('Validation failed');
     });
   });
 
   describe('updateAdvertiser', () => {
     it('should update an advertiser successfully', async () => {
-      const mockAdvertiserDto: Partial<AdvertiserDto> = {
-        marketingHandledBy: ['agency'],
-        annualRevenue: 20000,
-        marketingBudget: 28000,
-        website_url: 'www.google.com',
-      };
-      const mockUpdatedAdvertiser = { id: 1, ...mockAdvertiserDto };
-
-      // jest
-      //   .spyOn(advertiserService, 'updateAdvertiser')
-      //   .mockResolvedValue(mockUpdatedAdvertiser);
-
       const result = await controller.updateAdvertiser(1, mockAdvertiserDto);
 
       expect(result.success).toBe(true);
@@ -202,22 +161,7 @@ describe('CompanyController', () => {
 
   describe('createPublisher', () => {
     it('should create a publisher successfully', async () => {
-      const mockPublisherDto: PublisherDto = {
-        type: ['magazine'],
-        curr_monthly_revenue: 39999,
-        expected_revenue: 89,
-        own_ad_space: '21',
-        website_url: 'www.google.com',
-      };
-      const mockCreatedPublisher = { id: 1, ...mockPublisherDto };
-
-      // jest
-      //   .spyOn(publisherService, 'create')
-      //   .mockResolvedValue(mockCreatedPublisher);
-
-      const result = await controller.createPublisher(1, mockPublisherDto, {
-        user: { id: 1 },
-      });
+      const result = await controller.createPublisher(1, mockPublisherDto);
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Publisher created');
@@ -225,11 +169,11 @@ describe('CompanyController', () => {
 
     it('should handle errors during publisher creation', async () => {
       jest
-        .spyOn(publisherService, 'create')
+        .spyOn(publisherService, 'createPublisher')
         .mockRejectedValue(new Error('Validation error'));
 
       await expect(
-        controller.createPublisher(1, {} as PublisherDto, { user: { id: 1 } }),
+        controller.createPublisher(1, {} as PublisherDto),
       ).rejects.toThrow('Validation error');
     });
   });
@@ -237,17 +181,6 @@ describe('CompanyController', () => {
   // Publisher routes
   describe('getPublisherById', () => {
     it('should return a publisher by ID', async () => {
-      const mockPublisher = {
-        type: ['magazine'],
-        curr_monthly_revenue: 39999,
-        expected_revenue: 89,
-        own_ad_space: '21',
-        website_url: 'www.google.com',
-      };
-      // jest
-      //   .spyOn(publisherService, 'getPublisherById')
-      //   .mockResolvedValue(mockPublisher);
-
       const result = await controller.getPublisher(1);
 
       expect(result.success).toBe(true);
@@ -256,7 +189,7 @@ describe('CompanyController', () => {
 
     it('should handle publisher not found', async () => {
       jest
-        .spyOn(publisherService, 'getPublisherById')
+        .spyOn(publisherService, 'getPublisherByCompanyId')
         .mockRejectedValue(new Error('Publisher not found'));
 
       await expect(controller.getPublisher(999)).rejects.toThrow(
@@ -267,19 +200,6 @@ describe('CompanyController', () => {
 
   describe('updatePublisher', () => {
     it('should update a publisher', async () => {
-      const mockPublisherDto: Partial<PublisherDto> = {
-        type: ['magazine'],
-        curr_monthly_revenue: 39999,
-        expected_revenue: 89,
-        own_ad_space: '21',
-        website_url: 'www.google.com',
-      };
-      const mockUpdatedPublisher = { id: 1, ...mockPublisherDto };
-
-      // jest
-      //   .spyOn(publisherService, 'update')
-      //   .mockResolvedValue(mockUpdatedPublisher);
-
       const result = await controller.updatePublisher(1, mockPublisherDto);
 
       expect(result.success).toBe(true);
@@ -288,7 +208,7 @@ describe('CompanyController', () => {
 
     it('should handle publisher not found', async () => {
       jest
-        .spyOn(publisherService, 'update')
+        .spyOn(publisherService, 'updatePublisher')
         .mockRejectedValue(new Error('Publisher not found'));
 
       await expect(controller.updatePublisher(999, {})).rejects.toThrow(

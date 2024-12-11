@@ -79,7 +79,6 @@ export class CompanyService {
   async update(
     companyId: number,
     companyDto: Partial<CompanyDto>,
-    user: User,
   ): Promise<{ company: Partial<Company> }> {
     // Check for duplicate GST number
     await this.ensureUniqueGST(companyDto.GST_No, companyId);
@@ -125,10 +124,7 @@ export class CompanyService {
   }
 
   // Get company by ID
-  async getCompanyById(
-    companyId: number,
-    user: User,
-  ): Promise<{ company: Company }> {
+  async getCompanyById(companyId: number): Promise<{ company: Company }> {
     const companyDetails = await this.companyRepository.findOneByRelation(
       companyId,
       ['advertiser', 'publisher', 'userCompanyRoles', 'userCompanyRoles.user'],

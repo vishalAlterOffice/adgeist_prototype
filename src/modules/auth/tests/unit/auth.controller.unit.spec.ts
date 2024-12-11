@@ -2,8 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { sendResponse } from 'src/shared/util/sendResponse';
 import { AuthController } from '../../auth.controller';
 import { AuthService } from '../../service/auth.service';
-import { SignUpDto } from '../../dto/signup.dto';
-import { LoginDto } from '../../dto/login.dto';
+import { mockLoginDto, mockSignUpDto } from 'src/shared/tests/testData';
 
 jest.mock('../../service/auth.service');
 
@@ -23,12 +22,6 @@ describe('AuthController', () => {
 
   describe('signUp', () => {
     it('should register a new user and return a response', async () => {
-      const mockSignUpDto: SignUpDto = {
-        email: 'test@example.com',
-        username: 'testuser',
-        password: 'Password123!',
-      };
-
       const mockResponse = {
         user: { id: 1, email: 'test@example.com', username: 'testuser' },
       };
@@ -44,11 +37,6 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should log in a user and return a JWT token', async () => {
-      const mockLoginDto: LoginDto = {
-        email: 'test@example.com',
-        password: 'Password123!',
-      };
-
       const mockToken = { token: 'mock-jwt-token' };
 
       jest.spyOn(authService, 'login').mockResolvedValue(mockToken);

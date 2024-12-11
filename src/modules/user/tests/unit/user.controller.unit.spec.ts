@@ -2,10 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { sendResponse } from 'src/shared/util/sendResponse';
 import { UsersController } from '../../users.controller';
 import { UsersService } from '../../services/users.service';
-import { SignUpDto } from 'src/modules/auth/dto/signup.dto';
 import { AuthController } from 'src/modules/auth/auth.controller';
 import { AuthService } from '../../../auth/service/auth.service';
-import User from '../../entities/user.entity';
+import { mockSignUpDto, mockUsers } from 'src/shared/tests/testData';
 
 jest.mock('../../services/users.service');
 jest.mock('../../../auth/service/auth.service');
@@ -30,12 +29,6 @@ describe('UserController', () => {
 
   describe('signUp', () => {
     it('should register a new user and return a response', async () => {
-      const mockSignUpDto: SignUpDto = {
-        email: 'test@example.com',
-        username: 'testuser',
-        password: 'Password123!',
-      };
-
       const mockResponse = {
         user: { id: 1, email: 'test@example.com', username: 'testuser' },
       };
@@ -51,23 +44,6 @@ describe('UserController', () => {
 
   describe('GetAllUser', () => {
     it('should return all users as a response', async () => {
-      const mockUsers: Partial<User[]> = [
-        {
-          id: 1,
-          email: 'test1@example.com',
-          user_name: 'testuser1',
-          password: 'kskdasds223',
-          companyRoles: [],
-        },
-        {
-          id: 2,
-          email: 'test2@example.com',
-          user_name: 'testuser2',
-          password: 'kskd28232',
-          companyRoles: [],
-        },
-      ];
-
       // Mock the getAllUsers method from userService
       jest.spyOn(userService, 'getAllUsers').mockResolvedValue(mockUsers);
 
@@ -83,21 +59,13 @@ describe('UserController', () => {
 
   describe('getUserByID', () => {
     it('should return user by ID', async () => {
-      const mockResponse: User = {
-        id: 2,
-        email: 'test2@example.com',
-        user_name: 'testuser2',
-        password: 'kskd28232',
-        companyRoles: [],
-      };
-
       // Mock the getUserById method from usersService
       //   jest.spyOn(userService, 'getUserById').mockResolvedValue(mockResponse);
 
-      const result = await userController.getUserById(mockResponse.id);
+      const result = await userController.getUserById(mockUsers[0].id);
 
       // Assert that getUserById was called with the correct argument
-      expect(userService.getUserById).toHaveBeenCalledWith(mockResponse.id);
+      expect(userService.getUserById).toHaveBeenCalledWith(mockUsers[0].id);
       expect(result.success).toBe(true);
     });
 

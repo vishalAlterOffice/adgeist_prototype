@@ -1,14 +1,12 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
   Post,
   Query,
   Req,
-  Request,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -50,8 +48,8 @@ export class CompanyController {
   @Get(':id')
   @Roles('MEMBER', 'ADMIN')
   @UseGuards(RoleGuard)
-  async getCompanyById(@Param('id') id: number, @Req() req: any) {
-    const company = await this.companyService.getCompanyById(id, req.user);
+  async getCompanyById(@Param('id') id: number) {
+    const company = await this.companyService.getCompanyById(id);
     return sendResponse(true, 'Company details', company);
   }
 
@@ -72,13 +70,8 @@ export class CompanyController {
   async updateCompany(
     @Param('id') id: number,
     @Body() companyDto: Partial<CompanyDto>,
-    @Req() req: any,
   ) {
-    const updatedCompany = await this.companyService.update(
-      id,
-      companyDto,
-      req.user,
-    );
+    const updatedCompany = await this.companyService.update(id, companyDto);
     return sendResponse(true, 'Company updated', updatedCompany);
   }
 
@@ -112,7 +105,7 @@ export class CompanyController {
   @Get('advertiser/:id')
   @UseGuards(RoleGuard)
   @Roles('ADMIN', 'MEMBER')
-  async getAdvertiser(@Param('id') id: number, @Request() req: any) {
+  async getAdvertiser(@Param('id') id: number) {
     const advertiser =
       await this.advertiserService.getAdvertiserByCompanyId(id);
     return sendResponse(true, 'Advertiser details', advertiser);
@@ -126,12 +119,10 @@ export class CompanyController {
   async createAdvertiser(
     @Param('id') companyId: number,
     @Body() advertiserDto: AdvertiserDto,
-    @Req() req: any,
   ) {
     const newAdvertiser = await this.advertiserService.createAdvertiser(
       companyId,
       advertiserDto,
-      req.user,
     );
     return sendResponse(true, 'Advertiser created', newAdvertiser);
   }
@@ -169,12 +160,10 @@ export class CompanyController {
   async createPublisher(
     @Param('id') companyId: number,
     @Body() publisherDto: PublisherDto,
-    @Req() req: any,
   ) {
     const newPublisher = await this.publisherService.createPublisher(
       companyId,
       publisherDto,
-      req.user,
     );
     return sendResponse(true, 'Publisher created', newPublisher);
   }

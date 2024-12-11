@@ -6,7 +6,6 @@ import {
 import AdvertiserRepository from '../repositories/advertiser.repository';
 import CompanyRepository from '../repositories/company.repository';
 import Advertiser from '../entities/advertiser.entity';
-import User from 'src/modules/user/entities/user.entity';
 import { AdvertiserDto } from '../dto/advertiser.dto';
 import { ensureArray } from 'src/shared/util/helper';
 
@@ -21,7 +20,6 @@ export class AdvertiserService {
   async createAdvertiser(
     companyId: number,
     advertiserDto: AdvertiserDto,
-    user: User,
   ): Promise<{ advertiser: Advertiser }> {
     const company = await this.findCompanyById(companyId);
 
