@@ -25,6 +25,7 @@ export const mockUsers: Partial<User[]> = [
     password: 'kskdasds223',
     companyRoles: [],
     tokens: new Token(),
+    googleId: '',
   },
   {
     id: 2,
@@ -33,6 +34,7 @@ export const mockUsers: Partial<User[]> = [
     password: 'kskd28232',
     companyRoles: [],
     tokens: new Token(),
+    googleId: '',
   },
 ];
 
@@ -67,4 +69,24 @@ export const mockPublisherDto: PublisherDto = {
   expected_revenue: 89,
   own_ad_space: '21',
   website_url: 'www.google.com',
+};
+
+export const mockCompany = {
+  id: 1,
+  company_name: 'google',
+  GST_No: 'BHCCDY9928880',
+  address: 'xyz, abc',
+  city: 'Bangalore',
+  pin_code: 112233,
+  industry: 'IT',
+  country: 'India',
+  contact_no: '1234567890',
+  advertiser: null,
+  publisher: null,
+  userCompanyRoles: [],
+};
+
+export const mockToken = {
+  accessToken: 'mock-access-token',
+  refreshToken: 'mock-refresh-token',
 };

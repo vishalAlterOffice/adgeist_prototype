@@ -13,7 +13,6 @@ import { SignUpDto } from './dto/signup.dto';
 import { Public } from './auth.decorator';
 import { AuthService } from './service/auth.service';
 import { sendResponse } from 'src/shared/util/sendResponse';
-import { AuthGuard as GoogleAuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -24,8 +23,6 @@ import {
 import User from '../user/entities/user.entity';
 import { RefreshToken } from './dto/refreshToken.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { SkipGlobalInterceptor } from 'src/shared/decorators/skip-global-interceptor.decorator';
-import { UserGoogleProfile } from 'src/shared/interfaces/google_profile.interface';
 import { IdTokenDto } from './dto/ID_Token.dto';
 
 @Controller('auth')
@@ -98,14 +95,14 @@ export class AuthController {
   }
 
   @Get('google')
-  @UseGuards(GoogleAuthGuard('google'))
+  @UseGuards(AuthGuard('google'))
   @Public()
   async googleAuth() {
     // Redirects to Google authentication
   }
 
   @Get('google/callback')
-  @UseGuards(GoogleAuthGuard('google'))
+  @UseGuards(AuthGuard('google'))
   @Public()
   async googleAuthRedirect(@Req() req, @Res() res) {
     const redirectUrl = await this.authService.handleGoogleCallback(req.user);

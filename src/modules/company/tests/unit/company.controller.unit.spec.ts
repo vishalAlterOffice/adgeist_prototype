@@ -12,6 +12,7 @@ import { RoleName } from 'src/shared/util/roles';
 import {
   fakeAdvertiserDto,
   mockAdvertiserDto,
+  mockCompany,
   mockCompanyDto,
   mockPublisherDto,
 } from 'src/shared/tests/testData';
@@ -69,17 +70,30 @@ describe('CompanyController', () => {
 
   // Tests for company routes (getAllCompany, getCompanyById, createCompany, updateCompany)
 
-  // Advertiser routes
+  // company routes
   describe('create Company', () => {
     it('should create a new company', async () => {
-      // jest
-      //   .spyOn(advertiserService, 'createAdvertiser')
-      //   .mockResolvedValue(mockAdvertiser);
+      jest.spyOn(companyService, 'create').mockResolvedValue(mockCompany);
 
       const result = await controller.createCompany(mockCompanyDto, 1);
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Company created');
+      expect(result.data).toEqual(mockCompany);
+    });
+  });
+
+  describe('update Company', () => {
+    it('should update a existing company', async () => {
+      jest
+        .spyOn(companyService, 'update')
+        .mockResolvedValue({ company: mockCompany });
+
+      const result = await controller.updateCompany(1, mockCompanyDto);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Company updated');
+      expect(result.data).toEqual({ company: mockCompany });
     });
   });
 

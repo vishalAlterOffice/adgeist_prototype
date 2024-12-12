@@ -35,6 +35,14 @@ async function bootstrap() {
       },
       'jwt', // This name here is important for matching up with @ApiBearerAuth() in your controller!
     )
+    // .addGlobalParameters({
+    //   in: 'header',
+    //   required: false,
+    //   name: 'x-refresh-token',  // refresh token header
+    //   schema: {
+    //     example: 'refresh_token',
+    //   },
+    // })
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

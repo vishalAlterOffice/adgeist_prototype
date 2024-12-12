@@ -25,10 +25,7 @@ export class CompanyService {
   ) {}
 
   // Create a new company with transaction
-  async create(
-    companyDto: CompanyDto,
-    user: User,
-  ): Promise<{ company: Partial<Company> }> {
+  async create(companyDto: CompanyDto, user: User): Promise<Company> {
     // Start a new query runner
     const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -65,7 +62,7 @@ export class CompanyService {
       // Commit the transaction
       await queryRunner.commitTransaction();
 
-      return { company: newCompany };
+      return newCompany;
     } catch (error) {
       // Rollback the transaction on error
       await queryRunner.rollbackTransaction();

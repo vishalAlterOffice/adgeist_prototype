@@ -38,15 +38,12 @@ export class AuthService {
     return argon2.hash(token);
   }
 
-  private async generateTokens(
-    userId: number,
-    existingRefreshToken?: string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  private async generateTokens(userId: number, existingRefreshToken?: string) {
     const accessToken = await this.jwtService.signAsync(
       { id: userId },
       {
         secret: this.configService.get('JWT_SECRET'),
-        expiresIn: '1d',
+        expiresIn: this.configService.get('ACCESS_TOKEN_JWT_EXPIRES'),
       },
     );
 
@@ -56,7 +53,7 @@ export class AuthService {
           { id: userId },
           {
             secret: this.configService.get('JWT_REFRESH_SECRET'),
-            expiresIn: '7d',
+            expiresIn: this.configService.get('REFRESH_TOKEN_JWT_EXPIRES'),
           },
         );
 
@@ -83,6 +80,7 @@ export class AuthService {
       user_name: username,
       email,
       password: hashedPassword,
+      googleId: '',
     });
 
     const { password: _, ...userWithoutPassword } = newUser;
@@ -94,6 +92,10 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const { email, password } = loginDto;
     const user = await this.userService.findByEmail(email);
+
+    if (user && !user.password && user.googleId) {
+      throw new UnauthorizedException('Login with Google');
+    }
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
@@ -137,9 +139,7 @@ export class AuthService {
     await this.tokenRepository.delete({ user: { id: userId } });
   }
 
-  async googleIdTokenAuth(
-    idToken: string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  async googleIdTokenAuth(idToken: string) {
     const payload = await this.verifyGoogleIdToken(idToken);
     const googleUser: UserGoogleProfile = {
       email: payload.email,
@@ -169,6 +169,7 @@ export class AuthService {
         email: googleUser.email,
         user_name: googleUser.name,
         googleId: googleUser.googleId,
+        password: '',
       });
     } else if (!user.googleId) {
       await this.userService.updateUser(user.id, {
