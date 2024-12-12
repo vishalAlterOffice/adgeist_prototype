@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { CompanyDto } from '../dto/company.dto';
 import Company from '../entities/company.entity';
@@ -68,7 +69,7 @@ export class CompanyService {
     } catch (error) {
       // Rollback the transaction on error
       await queryRunner.rollbackTransaction();
-      throw error;
+      throw new InternalServerErrorException('Something ');
     } finally {
       // Release the query runner
       await queryRunner.release();

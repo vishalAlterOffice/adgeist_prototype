@@ -10,26 +10,24 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 import UserRepository from '../user/repositories/user.repository';
 import { UsersService } from '../user/services/users.service';
 import Role from 'src/shared/entities/roles.entity';
+import Token from '../user/entities/token.entity';
+import { GoogleStrategy } from './strategy/google.strategy';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        return {
-          secret: config.get<string>('JWT_SECRET'),
-          signOptions: {
-            expiresIn: config.get<string | number>('JWT_EXPIRES'),
-          },
-        };
-      },
-    }),
-    TypeOrmModule.forFeature([User, Role]),
+    JwtModule.register({}),
+    TypeOrmModule.forFeature([User, Role, Token]),
+    PassportModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, UsersService, UserRepository],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    UsersService,
+    UserRepository,
+    GoogleStrategy,
+  ],
   exports: [JwtStrategy, PassportModule, AuthService],
 })
 export class AuthModule {}

@@ -35,7 +35,7 @@ export class UsersService {
     await this.userRepository.destroy(user.id);
   }
 
-  async findByEmail(email: string) {
+  async findByEmail(email: string): Promise<User> {
     return await this.userRepository.findByEmail(email);
   }
 }

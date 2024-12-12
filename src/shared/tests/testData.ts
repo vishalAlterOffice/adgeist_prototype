@@ -3,6 +3,7 @@ import { SignUpDto } from 'src/modules/auth/dto/signup.dto';
 import { AdvertiserDto } from 'src/modules/company/dto/advertiser.dto';
 import { CompanyDto } from 'src/modules/company/dto/company.dto';
 import { PublisherDto } from 'src/modules/company/dto/publisher.dto';
+import Token from 'src/modules/user/entities/token.entity';
 import User from 'src/modules/user/entities/user.entity';
 
 export const mockSignUpDto: SignUpDto = {
@@ -23,6 +24,7 @@ export const mockUsers: Partial<User[]> = [
     user_name: 'testuser1',
     password: 'kskdasds223',
     companyRoles: [],
+    tokens: new Token(),
   },
   {
     id: 2,
@@ -30,6 +32,7 @@ export const mockUsers: Partial<User[]> = [
     user_name: 'testuser2',
     password: 'kskd28232',
     companyRoles: [],
+    tokens: new Token(),
   },
 ];
 
