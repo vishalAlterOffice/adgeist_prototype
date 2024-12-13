@@ -1,23 +1,29 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AuthController } from './auth.controller';
 import { AuthService } from './service/auth.service';
 import User from '../user/entities/user.entity';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import UserRepository from '../user/repositories/user.repository';
 import { UsersService } from '../user/services/users.service';
 import Role from 'src/shared/entities/roles.entity';
-import Token from '../user/entities/token.entity';
 import { GoogleStrategy } from './strategy/google.strategy';
+import { AuthController } from './controllers/auth.controller';
+import Token from './entities/token.entity';
+import OTP from './entities/otp.entity';
+import ForgotPassword from './entities/forgot_password.entity';
+import OTPRepository from './repositories/otp.repository';
+import { OTPService } from './service/otp.service';
+import { ForgotPasswordService } from './service/reset_password.service';
+import ForgotPasswordRepository from './repositories/forgot_password.repository';
+import { MailService } from '../mail/mail.service';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({}),
-    TypeOrmModule.forFeature([User, Role, Token]),
+    TypeOrmModule.forFeature([User, Role, Token, OTP, ForgotPassword]),
     PassportModule,
   ],
   controllers: [AuthController],
@@ -27,6 +33,11 @@ import { GoogleStrategy } from './strategy/google.strategy';
     UsersService,
     UserRepository,
     GoogleStrategy,
+    OTPRepository,
+    OTPService,
+    ForgotPasswordService,
+    ForgotPasswordRepository,
+    MailService,
   ],
   exports: [JwtStrategy, PassportModule, AuthService],
 })

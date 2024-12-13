@@ -5,17 +5,17 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from '../dto/signup.dto';
 import { LoginDto } from '../dto/login.dto';
 import { UsersService } from 'src/modules/user/services/users.service';
 import User from 'src/modules/user/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
-import Token from 'src/modules/user/entities/token.entity';
 import * as argon2 from 'argon2';
 import { OAuth2Client } from 'google-auth-library';
 import { UserGoogleProfile } from 'src/shared/interfaces/google_profile.interface';
+import Token from '../entities/token.entity';
+import OTPRepository from '../repositories/otp.repository';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +26,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
     private readonly configService: ConfigService,
+    private readonly otpRepository: OTPRepository,
   ) {
     const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     if (!clientId) {
@@ -74,7 +75,14 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const isEmailVerified = await this.otpRepository.findOne({ email });
+
+    // TODO: check here for google auth verification
+    if (!isEmailVerified || !isEmailVerified.isVerified) {
+      throw new BadRequestException('Verify this email first using OTP');
+    }
+
+    const hashedPassword = await this.hashToken(password);
 
     const newUser = await this.userService.createUser({
       user_name: username,
@@ -97,7 +105,7 @@ export class AuthService {
       throw new UnauthorizedException('Login with Google');
     }
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(await argon2.verify(user.password, password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
 

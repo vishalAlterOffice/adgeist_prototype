@@ -1,11 +1,5 @@
-import {
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-  OneToOne,
-  ManyToOne,
-} from 'typeorm';
-import User from './user.entity';
+import User from 'src/modules/user/entities/user.entity';
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 
 @Entity('token')
 class Token {

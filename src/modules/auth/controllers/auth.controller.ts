@@ -8,10 +8,10 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { LoginDto } from './dto/login.dto';
-import { SignUpDto } from './dto/signup.dto';
-import { Public } from './auth.decorator';
-import { AuthService } from './service/auth.service';
+import { LoginDto } from '../dto/login.dto';
+import { SignUpDto } from '../dto/signup.dto';
+import { Public } from '../auth.decorator';
+import { AuthService } from '../service/auth.service';
 import { sendResponse } from 'src/shared/util/sendResponse';
 import {
   ApiBearerAuth,
@@ -20,15 +20,24 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import User from '../user/entities/user.entity';
-import { RefreshToken } from './dto/refreshToken.dto';
+import User from '../../user/entities/user.entity';
+import { RefreshToken } from '../dto/refreshToken.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { IdTokenDto } from './dto/ID_Token.dto';
+import { IdTokenDto } from '../dto/ID_Token.dto';
+import { OTPDto } from '../dto/otp.dto';
+import { OTPService } from '../service/otp.service';
+import { ForgotPasswordService } from '../service/reset_password.service';
+import { ForgotPasswordDto } from '../dto/forgot_password.dto';
+import { ResetPasswordDto } from '../dto/reset_password.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private otpService: OTPService,
+    private forgotPasswordService: ForgotPasswordService,
+  ) {}
 
   @Post('/register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -114,5 +123,45 @@ export class AuthController {
   async googleIdTokenAuth(@Body() idTokenDto: IdTokenDto) {
     const tokens = await this.authService.googleIdTokenAuth(idTokenDto.idToken);
     return sendResponse(true, 'Authenticated Successfully', tokens);
+  }
+
+  @Post('send-otp')
+  @Public()
+  async sendOTP(@Body() otpDto: OTPDto) {
+    await this.otpService.sendOtp(otpDto.email);
+    return sendResponse(true, 'OTP sent on your email');
+  }
+
+  @Post('resend-otp')
+  @Public()
+  async resendOTP(@Body() otpDto: OTPDto) {
+    await this.otpService.sendOtp(otpDto.email);
+    return sendResponse(true, 'OTP sent on your email');
+  }
+
+  @Post('verify-otp')
+  @Public()
+  async verifyOTP(@Body() otpDto: OTPDto) {
+    const message = await this.otpService.verifyOTP(otpDto.email, otpDto.otp);
+    return sendResponse(true, message);
+  }
+
+  @Post('forgot-password')
+  @Public()
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    const message = await this.forgotPasswordService.forgotPassword(
+      forgotPasswordDto.email,
+    );
+    return sendResponse(true, message);
+  }
+
+  @Post('reset-password')
+  @Public()
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    const message = await this.forgotPasswordService.resetPassword(
+      resetPasswordDto.token,
+      resetPasswordDto.newPassword,
+    );
+    return sendResponse(true, message);
   }
 }

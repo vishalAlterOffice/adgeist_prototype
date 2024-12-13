@@ -1,9 +1,9 @@
 import { LoginDto } from 'src/modules/auth/dto/login.dto';
 import { SignUpDto } from 'src/modules/auth/dto/signup.dto';
+import Token from 'src/modules/auth/entities/token.entity';
 import { AdvertiserDto } from 'src/modules/company/dto/advertiser.dto';
 import { CompanyDto } from 'src/modules/company/dto/company.dto';
 import { PublisherDto } from 'src/modules/company/dto/publisher.dto';
-import Token from 'src/modules/user/entities/token.entity';
 import User from 'src/modules/user/entities/user.entity';
 
 export const mockSignUpDto: SignUpDto = {

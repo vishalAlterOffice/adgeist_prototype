@@ -8,6 +8,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CompanyModule } from './modules/company/company.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './shared/interceptors/api-response.interceptor';
+import { MailModule } from './modules/mail/mail.module';
+import { MailService } from './modules/mail/mail.service';
 
 @Module({
   imports: [
@@ -31,12 +33,14 @@ import { ResponseInterceptor } from './shared/interceptors/api-response.intercep
     UsersModule,
     AuthModule,
     CompanyModule,
+    MailModule,
   ],
   providers: [
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
     },
+    MailService,
   ],
 })
 export class AppModule {}

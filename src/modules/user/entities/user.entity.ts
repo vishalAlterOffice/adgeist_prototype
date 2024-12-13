@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import UserCompanyRole from './user_companyRole.entity';
-import Token from './token.entity';
+import Token from 'src/modules/auth/entities/token.entity';
 
 @Entity('user')
 class User {
