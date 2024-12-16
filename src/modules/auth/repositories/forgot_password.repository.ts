@@ -12,6 +12,19 @@ class ForgotPasswordRepository extends CrudRepository<ForgotPassword> {
   ) {
     super(forgotPasswordRepository);
   }
+
+  async deleteExpiredTokens(): Promise<void> {
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+    const deleted = await this.forgotPasswordRepository
+      .createQueryBuilder()
+      .delete()
+      .where('expiry < :date', { date: oneDayAgo })
+      .execute();
+
+    console.log('deleted', deleted);
+  }
 }
 
 export default ForgotPasswordRepository;

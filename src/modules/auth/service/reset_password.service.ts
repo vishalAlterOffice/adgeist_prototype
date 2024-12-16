@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
@@ -10,13 +11,13 @@ import * as argon2 from 'argon2';
 import User from 'src/modules/user/entities/user.entity';
 import ForgotPassword from '../entities/forgot_password.entity';
 import { MailService } from 'src/modules/mail/mail.service';
+import ForgotPasswordRepository from '../repositories/forgot_password.repository';
 
 @Injectable()
 export class ForgotPasswordService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(ForgotPassword)
-    private readonly forgotPasswordRepository: Repository<ForgotPassword>,
+    private readonly forgotPasswordRepository: ForgotPasswordRepository,
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
   ) {}
@@ -24,8 +25,12 @@ export class ForgotPasswordService {
   async forgotPassword(email: string): Promise<string> {
     const user = await this.findUserByEmail(email);
 
+    if (!user) {
+      throw new NotFoundException('Email not exists');
+    }
+
     const existingRequest = await this.forgotPasswordRepository.findOne({
-      where: { email },
+      email,
     });
     this.checkExistingRequest(existingRequest);
 
@@ -44,15 +49,17 @@ export class ForgotPasswordService {
   }
 
   async resetPassword(token: string, newPassword: string): Promise<string> {
-    const resetRequest = await this.forgotPasswordRepository.findOne({
-      where: { token },
-    });
+    const resetRequest = await this.forgotPasswordRepository.findOne({ token });
     this.validateResetRequest(resetRequest);
 
     const user = await this.findUserByEmail(resetRequest.email);
     await this.updatePasswordAndMarkTokenUsed(user, resetRequest, newPassword);
 
     return 'Password reset successful.';
+  }
+
+  async deleteExpiredTokens() {
+    await this.forgotPasswordRepository.deleteExpiredTokens();
   }
 
   private async findUserByEmail(email: string): Promise<User> {

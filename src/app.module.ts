@@ -10,6 +10,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './shared/interceptors/api-response.interceptor';
 import { MailModule } from './modules/mail/mail.module';
 import { MailService } from './modules/mail/mail.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CronJobModule } from './shared/cron_jobs/cron_job.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { MailService } from './modules/mail/mail.service';
     AuthModule,
     CompanyModule,
     MailModule,
+    CronJobModule,
+    ScheduleModule.forRoot(),
   ],
   providers: [
     {
