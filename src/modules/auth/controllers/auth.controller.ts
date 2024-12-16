@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Post,
   Req,
   Res,
@@ -29,6 +30,7 @@ import { OTPService } from '../service/otp.service';
 import { ForgotPasswordService } from '../service/reset_password.service';
 import { ForgotPasswordDto } from '../dto/forgot_password.dto';
 import { ResetPasswordDto } from '../dto/reset_password.dto';
+import { VerifyOTPDto } from '../dto/verify_otp.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -99,7 +101,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth('jwt')
   async logout(@Req() req: any) {
-    await this.authService.logout(req.user.id);
+    await this.authService.logout(req.refresh_token);
     return sendResponse(true, 'Logout successful', null);
   }
 
@@ -132,17 +134,13 @@ export class AuthController {
     return sendResponse(true, 'OTP sent on your email');
   }
 
-  @Post('resend-otp')
-  @Public()
-  async resendOTP(@Body() otpDto: OTPDto) {
-    await this.otpService.sendOtp(otpDto.email);
-    return sendResponse(true, 'OTP sent on your email');
-  }
-
   @Post('verify-otp')
   @Public()
-  async verifyOTP(@Body() otpDto: OTPDto) {
-    const message = await this.otpService.verifyOTP(otpDto.email, otpDto.otp);
+  async verifyOTP(@Body() verifyOtpDto: VerifyOTPDto) {
+    const message = await this.otpService.verifyOTP(
+      verifyOtpDto.email,
+      verifyOtpDto.otp,
+    );
     return sendResponse(true, message);
   }
 

@@ -3,8 +3,6 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from '../dto/signup.dto';
 import { LoginDto } from '../dto/login.dto';
@@ -14,19 +12,20 @@ import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { OAuth2Client } from 'google-auth-library';
 import { UserGoogleProfile } from 'src/shared/interfaces/google_profile.interface';
-import Token from '../entities/token.entity';
 import OTPRepository from '../repositories/otp.repository';
+import { AuthUtil } from '../util/auth.util';
+import TokenRepository from '../repositories/token.repository';
 
 @Injectable()
 export class AuthService {
   private googleClient: OAuth2Client;
   constructor(
-    @InjectRepository(Token)
-    private readonly tokenRepository: Repository<Token>,
-    private readonly jwtService: JwtService,
-    private readonly userService: UsersService,
-    private readonly configService: ConfigService,
-    private readonly otpRepository: OTPRepository,
+    private jwtService: JwtService,
+    private userService: UsersService,
+    private configService: ConfigService,
+    private otpRepository: OTPRepository,
+    private authUtil: AuthUtil,
+    private tokenRepository: TokenRepository,
   ) {
     const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     if (!clientId) {
@@ -58,7 +57,8 @@ export class AuthService {
           },
         );
 
-    const refreshTokenHash = await this.hashToken(refreshToken);
+    const refreshTokenHash =
+      await this.authUtil.encryptWithStaticSalt(refreshToken);
 
     await this.tokenRepository.save({
       user: { id: userId },
@@ -116,15 +116,12 @@ export class AuthService {
     userId: number,
     refreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const tokenRecords = await this.tokenRepository.find({
-      where: { user: { id: userId } },
+    const hashToken = await this.authUtil.encryptWithStaticSalt(refreshToken);
+    const tokenRecords = await this.tokenRepository.findOne({
+      refreshToken: hashToken,
     });
 
-    const tokenRecord = await tokenRecords.find(async (token) =>
-      argon2.verify(token.refreshToken, refreshToken),
-    );
-
-    if (!tokenRecord) {
+    if (!tokenRecords) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -143,8 +140,11 @@ export class AuthService {
     return this.generateTokens(userId, refreshToken);
   }
 
-  async logout(userId: number): Promise<void> {
-    await this.tokenRepository.delete({ user: { id: userId } });
+  async logout(refreshToken: string): Promise<void> {
+    const hashRefreshToken =
+      await this.authUtil.encryptWithStaticSalt(refreshToken);
+    console.log('hashToken', hashRefreshToken);
+    await this.tokenRepository.deleteRefreshToken(hashRefreshToken);
   }
 
   async googleIdTokenAuth(idToken: string) {

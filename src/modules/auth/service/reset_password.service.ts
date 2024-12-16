@@ -3,38 +3,67 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { DataSource, QueryRunner } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { suid } from 'rand-token';
 import * as argon2 from 'argon2';
-import UserRepository from 'src/modules/user/repositories/user.repository';
-import ForgotPasswordRepository from '../repositories/forgot_password.repository';
-import ForgotPassword from '../entities/forgot_password.entity';
 import User from 'src/modules/user/entities/user.entity';
+import ForgotPassword from '../entities/forgot_password.entity';
 import { MailService } from 'src/modules/mail/mail.service';
 
 @Injectable()
 export class ForgotPasswordService {
   constructor(
-    private readonly userRepository: UserRepository,
-    private readonly forgotPasswordRepository: ForgotPasswordRepository,
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(ForgotPassword)
+    private readonly forgotPasswordRepository: Repository<ForgotPassword>,
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
   ) {}
 
   async forgotPassword(email: string): Promise<string> {
-    // Find mail for user
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.findUserByEmail(email);
+
+    const existingRequest = await this.forgotPasswordRepository.findOne({
+      where: { email },
+    });
+    this.checkExistingRequest(existingRequest);
+
+    const { token, expiry } = this.generateResetToken();
+    await this.saveOrUpdateForgotPasswordRequest(
+      existingRequest,
+      email,
+      token,
+      expiry,
+    );
+
+    const resetUrl = this.generateResetUrl(token);
+    await this.mailService.sendForgotPasswordEmail(email, resetUrl);
+
+    return 'A password reset link has been sent to your email address.';
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<string> {
+    const resetRequest = await this.forgotPasswordRepository.findOne({
+      where: { token },
+    });
+    this.validateResetRequest(resetRequest);
+
+    const user = await this.findUserByEmail(resetRequest.email);
+    await this.updatePasswordAndMarkTokenUsed(user, resetRequest, newPassword);
+
+    return 'Password reset successful.';
+  }
+
+  private async findUserByEmail(email: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new BadRequestException('Email not registered.');
     }
+    return user;
+  }
 
-    // Check existing user
-    const existingRequest = await this.forgotPasswordRepository.findOne({
-      email,
-    });
-    const currentTime = new Date();
-
-    // Check if token not expired/ or used
+  private checkExistingRequest(existingRequest: ForgotPassword | null): void {
     if (
       existingRequest &&
       !this.isTokenExpired(existingRequest.expiry) &&
@@ -42,12 +71,22 @@ export class ForgotPasswordService {
     ) {
       throw new BadRequestException('A reset token has already been sent.');
     }
+  }
 
-    // Create a random uuid token
+  private generateResetToken(): { token: string; expiry: Date } {
     const token = suid(128);
-    const expiry = new Date(currentTime.getTime() + 5 * 60 * 1000); // 5 mint expiry
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
+    return { token, expiry };
+  }
 
-    // Create and update the token based on existence
+  private async saveOrUpdateForgotPasswordRequest(
+    existingRequest: ForgotPassword | null,
+    email: string,
+    token: string,
+    expiry: Date,
+  ): Promise<void> {
+    const currentTime = new Date();
+
     if (existingRequest) {
       await this.forgotPasswordRepository.update(existingRequest.id, {
         token,
@@ -64,22 +103,13 @@ export class ForgotPasswordService {
         created_At: currentTime,
       });
     }
-
-    // generating Url
-    const resetUrl = `https://www.example.com/reset-password?token=${token}`;
-    console.log('url is', resetUrl);
-
-    // Sending the notification over mail
-    await this.mailService.sendForgotPasswordEmail(email, resetUrl);
-
-    return 'A password reset link has been sent to your email address.';
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<string> {
-    // Find user based on token
-    const resetRequest = await this.forgotPasswordRepository.findOne({ token });
+  private generateResetUrl(token: string): string {
+    return `https://www.example.com/reset-password?token=${token}`;
+  }
 
-    // check is token expired or used already
+  private validateResetRequest(resetRequest: ForgotPassword | null): void {
     if (
       !resetRequest ||
       this.isTokenExpired(resetRequest.expiry) ||
@@ -87,34 +117,28 @@ export class ForgotPasswordService {
     ) {
       throw new BadRequestException('Invalid or expired token.');
     }
+  }
 
-    // check if mail exists for the token
-    const user = await this.userRepository.findByEmail(resetRequest.email);
-    if (!user) {
-      throw new BadRequestException('No user found for this token.');
-    }
-
-    // Hash the new password
+  private async updatePasswordAndMarkTokenUsed(
+    user: User,
+    resetRequest: ForgotPassword,
+    newPassword: string,
+  ): Promise<void> {
     const hashedPassword = await argon2.hash(newPassword);
     const queryRunner: QueryRunner = this.dataSource.createQueryRunner();
 
-    // start transaction
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Update the password for user
       await queryRunner.manager.update(User, user.id, {
         password: hashedPassword,
       });
-
-      // update the status of token to used
       await queryRunner.manager.update(ForgotPassword, resetRequest.id, {
         isUsed: true,
       });
 
       await queryRunner.commitTransaction();
-      return 'Password reset successful.';
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new InternalServerErrorException(
@@ -125,7 +149,6 @@ export class ForgotPasswordService {
     }
   }
 
-  // Helper: for checking expiry date
   private isTokenExpired(expiry: Date): boolean {
     return new Date() > expiry;
   }

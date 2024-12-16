@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { v4 as generateUuid } from 'uuid';
 import * as argon2 from 'argon2';
 import { ConfigService } from '@nestjs/config';
 
@@ -14,7 +13,7 @@ export class AuthUtil {
     }
     this.secretSalt = Buffer.from(saltValue);
     if (this.secretSalt.length < 16) {
-      throw new Error('The "HASH_SALT" value must be at least 16 bytes long');
+      throw new Error('HASH_SALT must be at least 16 bytes long');
     }
   }
 

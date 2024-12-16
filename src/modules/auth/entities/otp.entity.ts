@@ -16,9 +16,6 @@ class OTP {
 
   @Column({ default: false })
   isVerified: boolean;
-
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  created_At: Date;
 }
 
 export default OTP;

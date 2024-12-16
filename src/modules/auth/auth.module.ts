@@ -18,6 +18,8 @@ import { OTPService } from './service/otp.service';
 import { ForgotPasswordService } from './service/reset_password.service';
 import ForgotPasswordRepository from './repositories/forgot_password.repository';
 import { MailService } from '../mail/mail.service';
+import TokenRepository from './repositories/token.repository';
+import { AuthUtil } from './util/auth.util';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { MailService } from '../mail/mail.service';
     ForgotPasswordService,
     ForgotPasswordRepository,
     MailService,
+    TokenRepository,
+    AuthUtil,
   ],
   exports: [JwtStrategy, PassportModule, AuthService],
 })

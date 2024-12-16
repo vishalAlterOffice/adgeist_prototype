@@ -35,17 +35,19 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     // Validate refresh_token if provided
-    // const refreshToken = req.headers['x-refresh-token'];
-    // if (refreshToken) {
-    //   try {
-    //     jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    //     req.refresh_token = refreshToken; // Attach to request if needed later
-    //   } catch (tokenError) {
-    //     throw new UnauthorizedException(
-    //       'Refresh token expired, please log in again.',
-    //     );
-    //   }
-    // }
+    const refreshToken = req.headers['refresh-token'];
+    if (refreshToken) {
+      try {
+        jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+        req.refresh_token = refreshToken; // Attach to request if needed later
+      } catch (tokenError) {
+        throw new UnauthorizedException(
+          'Refresh token expired, please log in again.',
+        );
+      }
+    } else {
+      throw new UnauthorizedException('Refresh token not provided');
+    }
 
     const { password, ...userWithoutPassword } = user;
     req.user = userWithoutPassword;
